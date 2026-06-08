@@ -107,7 +107,7 @@ pub trait PinExt {
 /// Some alternate mode (type state)
 #[derive(Debug, Default)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-pub struct Alternate<Otype>(PhantomData<Otype>);
+pub struct Alternate<const A: u8, Otype = PushPull>(PhantomData<Otype>);
 
 /// Input mode (type state)
 #[derive(Debug, Default)]
@@ -153,7 +153,35 @@ pub struct PushPull;
 pub struct Analog;
 
 /// JTAG/SWD mote (type state)
-pub type Debugger = Alternate<PushPull>;
+pub type Debugger = Alternate<0, PushPull>;
+
+macro_rules! af {
+    ($($i:literal: $AFi:ident),+) => {
+        $(
+            #[doc = concat!("Alternate function ", $i, " (type state)")]
+            pub type $AFi<Otype = PushPull> = Alternate<$i, Otype>;
+        )+
+    };
+}
+
+af!(
+    0: AF0,
+    1: AF1,
+    2: AF2,
+    3: AF3,
+    4: AF4,
+    5: AF5,
+    6: AF6,
+    7: AF7,
+    8: AF8,
+    9: AF9,
+    10: AF10,
+    11: AF11,
+    12: AF12,
+    13: AF13,
+    14: AF14,
+    15: AF15
+);
 
 #[allow(unused)]
 pub(crate) mod marker {
@@ -168,20 +196,23 @@ pub(crate) mod marker {
     
     /// Marker trait for all pin modes except alternate
     pub trait NotAlt {}
-    
+
+    /// Marker trait for pins with alternate function `A` mapping
+    pub trait IntoAf<const A: u8> {}
+
 }
 
 impl<MODE> marker::Interruptible for Output<MODE> {}
 impl<Pull> marker::Interruptible for Input<Pull> {}
 impl<Pull> marker::Readable for Input<Pull> {}
 impl marker::Readable for Output<OpenDrain> {}
-impl<Otype> marker::Interruptible for Alternate<Otype> {}
-impl<Otype> marker::Readable for Alternate<Otype> {}
+impl<const A: u8, Otype> marker::Interruptible for Alternate<A, Otype> {}
+impl<const A: u8, Otype> marker::Readable for Alternate<A, Otype> {}
 impl<Pull> marker::Active for Input<Pull> {}
 impl<Otype> marker::OutputSpeed for Output<Otype> {}
-impl<Otype> marker::OutputSpeed for Alternate<Otype> {}
+impl<const A: u8, Otype> marker::OutputSpeed for Alternate<A, Otype> {}
 impl<Otype> marker::Active for Output<Otype> {}
-impl<Otype> marker::Active for Alternate<Otype> {}
+impl<const A: u8, Otype> marker::Active for Alternate<A, Otype> {}
 impl<Pull> marker::NotAlt for Input<Pull> {}
 impl<Otype> marker::NotAlt for Output<Otype> {}
 impl marker::NotAlt for Analog {}
@@ -283,20 +314,10 @@ where
 {
     /// Set pin speed
     pub fn set_speed(&mut self, speed: Speed) {
-        let offset = 2 * { N };
-
-        unsafe {
-            if N < 8 {
-                (*gpiox::<P>())
-                .pl_cfg()
-                .modify(|r, w| w.bits((r.bits() & !(0b11 << offset)) | ((speed as u32) << offset)));
-            } else {
-                (*gpiox::<P>())
-                .ph_cfg()
-                .modify(|r, w| w.bits((r.bits() & !(0b11 << offset)) | ((speed as u32) << offset)));
-
-            }
-        }
+        let gpio = unsafe { &(*gpiox::<P>()) };
+        gpio.sr().modify(|r, w| unsafe {
+            w.bits((r.bits() & !(1 << N)) | (((speed as u32 >> 1) & 1) << N))
+        });
     }
 
     /// Set pin speed
@@ -468,7 +489,7 @@ where
 
 macro_rules! gpio {
     ($GPIOX:ident, $gpiox:ident, $PEPin:ident, $port_id:expr, $PXn:ident, [
-        $($PXi:ident: ($pxi:ident, $pin_number:expr $(, $MODE:ty)?),)+
+        $($PXi:ident: ($pxi:ident, $pin_number:expr, [$($A:literal),*] $(, $MODE:ty)?),)+
     ]) => {
         /// GPIO
         pub mod $gpiox {
@@ -509,6 +530,10 @@ macro_rules! gpio {
                 #[doc=stringify!($PXi)]
                 #[doc=" pin"]
                 pub type $PXi<MODE = crate::gpio::Input<crate::gpio::Floating>> = super::Pin<$port_id, $pin_number, MODE>;
+
+                $(
+                    impl<MODE> crate::gpio::marker::IntoAf<$A> for $PXi<MODE> { }
+                )*
             )+
 
         }
@@ -536,79 +561,79 @@ const fn gpiox<const P: char>() -> *const crate::pac::gpioa::RegisterBlock {
 
 
 gpio!(Gpioa, gpioa, PA, 'A', PAn, [
-    PA0: (pa0, 0),
-    PA1: (pa1, 1),
-    PA2: (pa2, 2),
-    PA3: (pa3, 3),
-    PA4: (pa4, 4),
-    PA5: (pa5, 5),
-    PA6: (pa6, 6),
-    PA7: (pa7, 7),
-    PA8: (pa8, 8),
-    PA9: (pa9, 9),
-    PA10: (pa10, 10),
-    PA11: (pa11, 11),
-    PA12: (pa12, 12),
-    PA13: (pa13, 13, super::Debugger), // SWDIO, PullUp VeryHigh speed
-    PA14: (pa14, 14, super::Debugger), // SWCLK, PullDown
-    PA15: (pa15, 15, super::Debugger), // JTDI, PullUp
+    PA0: (pa0, 0, []),
+    PA1: (pa1, 1, []),
+    PA2: (pa2, 2, []),
+    PA3: (pa3, 3, []),
+    PA4: (pa4, 4, []),
+    PA5: (pa5, 5, []),
+    PA6: (pa6, 6, []),
+    PA7: (pa7, 7, []),
+    PA8: (pa8, 8, []),
+    PA9: (pa9, 9, []),
+    PA10: (pa10, 10, []),
+    PA11: (pa11, 11, []),
+    PA12: (pa12, 12, []),
+    PA13: (pa13, 13, [], super::Debugger), // SWDIO, PullUp VeryHigh speed
+    PA14: (pa14, 14, [], super::Debugger), // SWCLK, PullDown
+    PA15: (pa15, 15, [], super::Debugger), // JTDI, PullUp
 ]);
 
 gpio!(Gpiob, gpiob, PBx, 'B', PBn, [
-    PB0: (pb0, 0),
-    PB1: (pb1, 1),
-    PB2: (pb2, 2),
-    PB3: (pb3, 3, super::Debugger),
-    PB4: (pb4, 4, super::Debugger),
-    PB5: (pb5, 5),
-    PB6: (pb6, 6),
-    PB7: (pb7, 7),
-    PB8: (pb8, 8),
-    PB9: (pb9, 9),
-    PB10: (pb10, 10),
-    PB11: (pb11, 11),
-    PB12: (pb12, 12),
-    PB13: (pb13, 13),
-    PB14: (pb14, 14),
-    PB15: (pb15, 15),
+    PB0: (pb0, 0, []),
+    PB1: (pb1, 1, []),
+    PB2: (pb2, 2, []),
+    PB3: (pb3, 3, [], super::Debugger),
+    PB4: (pb4, 4, [], super::Debugger),
+    PB5: (pb5, 5, []),
+    PB6: (pb6, 6, []),
+    PB7: (pb7, 7, []),
+    PB8: (pb8, 8, []),
+    PB9: (pb9, 9, []),
+    PB10: (pb10, 10, []),
+    PB11: (pb11, 11, []),
+    PB12: (pb12, 12, []),
+    PB13: (pb13, 13, []),
+    PB14: (pb14, 14, []),
+    PB15: (pb15, 15, []),
 ]);
 
 gpio!(Gpioc, gpioc, PCx, 'C', PCn, [
-    PC0: (pc0, 0),
-    PC1: (pc1, 1),
-    PC2: (pc2, 2),
-    PC3: (pc3, 3),
-    PC4: (pc4, 4),
-    PC5: (pc5, 5),
-    PC6: (pc6, 6),
-    PC7: (pc7, 7),
-    PC8: (pc8, 8),
-    PC9: (pc9, 9),
-    PC10: (pc10, 10),
-    PC11: (pc11, 11),
-    PC12: (pc12, 12),
-    PC13: (pc13, 13),
-    PC14: (pc14, 14),
-    PC15: (pc15, 15),
+    PC0: (pc0, 0, []),
+    PC1: (pc1, 1, []),
+    PC2: (pc2, 2, []),
+    PC3: (pc3, 3, []),
+    PC4: (pc4, 4, []),
+    PC5: (pc5, 5, []),
+    PC6: (pc6, 6, []),
+    PC7: (pc7, 7, []),
+    PC8: (pc8, 8, []),
+    PC9: (pc9, 9, []),
+    PC10: (pc10, 10, []),
+    PC11: (pc11, 11, []),
+    PC12: (pc12, 12, []),
+    PC13: (pc13, 13, []),
+    PC14: (pc14, 14, []),
+    PC15: (pc15, 15, []),
 ]);
 
 gpio!(Gpiod, gpiod, PDx, 'D', PDn, [
-    PD0: (pd0, 0),
-    PD1: (pd1, 1),
-    PD2: (pd2, 2),
-    PD3: (pd3, 3),
-    PD4: (pd4, 4),
-    PD5: (pd5, 5),
-    PD6: (pd6, 6),
-    PD7: (pd7, 7),
-    PD8: (pd8, 8),
-    PD9: (pd9, 9),
-    PD10: (pd10, 10),
-    PD11: (pd11, 11),
-    PD12: (pd12, 12),
-    PD13: (pd13, 13),
-    PD14: (pd14, 14),
-    PD15: (pd15, 15),
+    PD0: (pd0, 0, []),
+    PD1: (pd1, 1, []),
+    PD2: (pd2, 2, []),
+    PD3: (pd3, 3, []),
+    PD4: (pd4, 4, []),
+    PD5: (pd5, 5, []),
+    PD6: (pd6, 6, []),
+    PD7: (pd7, 7, []),
+    PD8: (pd8, 8, []),
+    PD9: (pd9, 9, []),
+    PD10: (pd10, 10, []),
+    PD11: (pd11, 11, []),
+    PD12: (pd12, 12, []),
+    PD13: (pd13, 13, []),
+    PD14: (pd14, 14, []),
+    PD15: (pd15, 15, []),
 ]);
 
 #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]

@@ -1,22 +1,67 @@
 use super::*;
 
-impl<const P: char, const N: u8> Pin<P, N, Alternate<PushPull>> {
+/// Apply the L4-model pin configuration for pin `n` on a gpio register block:
+/// PMODE (2-bit), optional POTYPE (1-bit), PUPD (2-bit), and optional AF code
+/// into AFL/AFH (4-bit nibble). All via raw bits to avoid a 16-arm match.
+#[inline(always)]
+pub(super) fn set_mode_bits(
+    gpio: &crate::pac::gpioa::RegisterBlock,
+    n: u8,
+    pmode: u32,
+    otype: Option<bool>,
+    pupd: u32,
+    afnum: Option<u32>,
+) {
+    let n = n as u32;
+    // PMODE: 2 bits per pin
+    gpio.pmode().modify(|r, w| unsafe {
+        w.bits((r.bits() & !(0b11 << (2 * n))) | (pmode << (2 * n)))
+    });
+    // PUPD: 2 bits per pin
+    gpio.pupd().modify(|r, w| unsafe {
+        w.bits((r.bits() & !(0b11 << (2 * n))) | (pupd << (2 * n)))
+    });
+    // POTYPE: 1 bit per pin (only when the mode specifies it)
+    if let Some(od) = otype {
+        gpio.potype().modify(|r, w| unsafe {
+            w.bits((r.bits() & !(1 << n)) | ((od as u32) << n))
+        });
+    }
+    // Alternate function selector: 4 bits per pin, AFL (0..7) / AFH (8..15)
+    if let Some(af) = afnum {
+        if n < 8 {
+            gpio.afl().modify(|r, w| unsafe {
+                w.bits((r.bits() & !(0xF << (4 * n))) | (af << (4 * n)))
+            });
+        } else {
+            let nn = n - 8;
+            gpio.afh().modify(|r, w| unsafe {
+                w.bits((r.bits() & !(0xF << (4 * nn))) | (af << (4 * nn)))
+            });
+        }
+    }
+}
+
+impl<const P: char, const N: u8> Pin<P, N, Alternate<0, PushPull>> {
     /// Turns pin alternate configuration pin into open drain
-    pub fn set_open_drain(self) -> Pin<P, N, Alternate<OpenDrain>> {
+    pub fn set_open_drain(self) -> Pin<P, N, Alternate<0, OpenDrain>> {
         self.into_mode()
     }
 }
 
 impl<const P: char, const N: u8, MODE: PinMode> Pin<P, N, MODE> {
     /// Configures the pin to operate alternate mode
-    pub fn into_alternate(self) -> Pin<P, N, Alternate<PushPull>>
+    pub fn into_alternate<const A: u8>(self) -> Pin<P, N, Alternate<A, PushPull>>
+    where
+        Alternate<A, PushPull>: PinMode,
     {
         self.into_mode()
     }
 
     /// Configures the pin to operate in alternate open drain mode
-    #[allow(path_statements)]
-    pub fn into_alternate_open_drain(self) -> Pin<P, N, Alternate<OpenDrain>>
+    pub fn into_alternate_open_drain<const A: u8>(self) -> Pin<P, N, Alternate<A, OpenDrain>>
+    where
+        Alternate<A, OpenDrain>: PinMode,
     {
         self.into_mode()
     }
@@ -88,36 +133,8 @@ impl<const P: char, const N: u8, MODE: PinMode> Pin<P, N, MODE> {
     /// ensure they use this properly.
     #[inline(always)]
     pub(super) fn mode<M: PinMode>(&mut self) {
-        // Input<PullUp> or Input<PullDown> mode
         let gpio = unsafe { &(*crate::gpio::gpiox::<P>()) };
-
-        if let Some(pull) = MODE::PULL {
-            if pull {
-                gpio.pbsc().write(|w| unsafe { w.bits(1 << N) });
-            } else {
-                gpio.pbc().write(|w| unsafe { w.bits(1 << N) });
-            }
-        }
-        
-        match self.pin_id() {
-            0 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg0().bits(M::CNF as u8).pmode0().bits(M::MODE as u8) }),
-            1 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg1().bits(M::CNF as u8).pmode1().bits(M::MODE as u8) }),
-            2 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg2().bits(M::CNF as u8).pmode2().bits(M::MODE as u8) }),
-            3 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg3().bits(M::CNF as u8).pmode3().bits(M::MODE as u8) }),
-            4 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg4().bits(M::CNF as u8).pmode4().bits(M::MODE as u8) }),
-            5 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg5().bits(M::CNF as u8).pmode5().bits(M::MODE as u8) }),
-            6 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg6().bits(M::CNF as u8).pmode6().bits(M::MODE as u8) }),
-            7 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg7().bits(M::CNF as u8).pmode7().bits(M::MODE as u8) }),
-            8 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg8().bits(M::CNF as u8).pmode8().bits(M::MODE as u8) }),
-            9 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg9().bits(M::CNF as u8).pmode9().bits(M::MODE as u8) }),
-            10 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg10().bits(M::CNF as u8).pmode10().bits(M::MODE as u8) }),
-            11 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg11().bits(M::CNF as u8).pmode11().bits(M::MODE as u8) }),
-            12 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg12().bits(M::CNF as u8).pmode12().bits(M::MODE as u8) }),
-            13 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg13().bits(M::CNF as u8).pmode13().bits(M::MODE as u8) }),
-            14 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg14().bits(M::CNF as u8).pmode14().bits(M::MODE as u8) }),
-            15 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg15().bits(M::CNF as u8).pmode15().bits(M::MODE as u8) }),
-            _ => unreachable!()
-        };
+        set_mode_bits(gpio, N, M::PMODE, M::OTYPE, M::PUPD, M::AFNUM);
     }
 
     #[inline(always)]
@@ -132,37 +149,8 @@ impl<MODE: PinMode> ErasedPin<MODE> {
     #[inline(always)]
     pub(super) fn mode<M: PinMode>(&mut self) {
         let n = self.pin_id();
-        // Input<PullUp> or Input<PullDown> mode
         let gpio = self.block();
-
-        if let Some(pull) = MODE::PULL {
-            if pull {
-                gpio.pbsc().write(|w| unsafe { w.bits(1 << n) });
-            } else {
-                gpio.pbc().write(|w| unsafe { w.bits(1 << n) });
-            }
-        }
-
-
-        match self.pin_id() {
-            0 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg0().bits(M::CNF as u8).pmode0().bits(M::MODE as u8) }),
-            1 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg1().bits(M::CNF as u8).pmode1().bits(M::MODE as u8) }),
-            2 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg2().bits(M::CNF as u8).pmode2().bits(M::MODE as u8) }),
-            3 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg3().bits(M::CNF as u8).pmode3().bits(M::MODE as u8) }),
-            4 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg4().bits(M::CNF as u8).pmode4().bits(M::MODE as u8) }),
-            5 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg5().bits(M::CNF as u8).pmode5().bits(M::MODE as u8) }),
-            6 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg6().bits(M::CNF as u8).pmode6().bits(M::MODE as u8) }),
-            7 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg7().bits(M::CNF as u8).pmode7().bits(M::MODE as u8) }),
-            8 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg8().bits(M::CNF as u8).pmode8().bits(M::MODE as u8) }),
-            9 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg9().bits(M::CNF as u8).pmode9().bits(M::MODE as u8) }),
-            10 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg10().bits(M::CNF as u8).pmode10().bits(M::MODE as u8) }),
-            11 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg11().bits(M::CNF as u8).pmode11().bits(M::MODE as u8) }),
-            12 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg12().bits(M::CNF as u8).pmode12().bits(M::MODE as u8) }),
-            13 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg13().bits(M::CNF as u8).pmode13().bits(M::MODE as u8) }),
-            14 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg14().bits(M::CNF as u8).pmode14().bits(M::MODE as u8) }),
-            15 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg15().bits(M::CNF as u8).pmode15().bits(M::MODE as u8) }),
-            _ => unreachable!()
-        };
+        set_mode_bits(gpio, n, M::PMODE, M::OTYPE, M::PUPD, M::AFNUM);
     }
 
     #[inline(always)]
@@ -177,36 +165,8 @@ impl<const P: char, MODE: PinMode> PartiallyErasedPin<P, MODE> {
     #[inline(always)]
     pub(super) fn mode<M: PinMode>(&mut self) {
         let n = self.pin_id();
-        // Input<PullUp> or Input<PullDown> mode
         let gpio = unsafe { &(*crate::gpio::gpiox::<P>()) };
-        if let Some(pull) = MODE::PULL {
-            if pull {
-                gpio.pbsc().write(|w| unsafe { w.bits(1 << n) });
-            } else {
-                gpio.pbc().write(|w| unsafe { w.bits(1 << n) });
-            }
-        }
-
-
-        match self.pin_id() {
-            0 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg0().bits(M::CNF as u8).pmode0().bits(M::MODE as u8) }),
-            1 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg1().bits(M::CNF as u8).pmode1().bits(M::MODE as u8) }),
-            2 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg2().bits(M::CNF as u8).pmode2().bits(M::MODE as u8) }),
-            3 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg3().bits(M::CNF as u8).pmode3().bits(M::MODE as u8) }),
-            4 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg4().bits(M::CNF as u8).pmode4().bits(M::MODE as u8) }),
-            5 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg5().bits(M::CNF as u8).pmode5().bits(M::MODE as u8) }),
-            6 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg6().bits(M::CNF as u8).pmode6().bits(M::MODE as u8) }),
-            7 =>  gpio.pl_cfg().modify(|_,w| unsafe { w.pcfg7().bits(M::CNF as u8).pmode7().bits(M::MODE as u8) }),
-            8 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg8().bits(M::CNF as u8).pmode8().bits(M::MODE as u8) }),
-            9 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg9().bits(M::CNF as u8).pmode9().bits(M::MODE as u8) }),
-            10 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg10().bits(M::CNF as u8).pmode10().bits(M::MODE as u8) }),
-            11 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg11().bits(M::CNF as u8).pmode11().bits(M::MODE as u8) }),
-            12 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg12().bits(M::CNF as u8).pmode12().bits(M::MODE as u8) }),
-            13 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg13().bits(M::CNF as u8).pmode13().bits(M::MODE as u8) }),
-            14 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg14().bits(M::CNF as u8).pmode14().bits(M::MODE as u8) }),
-            15 =>  gpio.ph_cfg().modify(|_,w| unsafe { w.pcfg15().bits(M::CNF as u8).pmode15().bits(M::MODE as u8) }),
-            _ => unreachable!()
-        };
+        set_mode_bits(gpio, n, M::PMODE, M::OTYPE, M::PUPD, M::AFNUM);
     }
 
     #[inline(always)]
@@ -351,56 +311,53 @@ impl<const P: char, const N: u8, CURRENT: PinMode, ORIG: PinMode> Drop
 ///
 /// It can not be implemented by outside types.
 pub trait PinMode: Default {
-    const CNF: u32;
-    const MODE: u32;
-    const PULL: Option<bool> = None;
+    /// PMODE field value (00 input, 01 output, 10 alternate, 11 analog)
+    const PMODE: u32;
+    /// POTYPE bit (false push-pull, true open-drain). None = don't touch.
+    const OTYPE: Option<bool> = None;
+    /// PUPD field value (00 none, 01 pull-up, 10 pull-down)
+    const PUPD: u32 = 0b00;
+    /// Alternate function number to write into afsel (only for Alternate)
+    const AFNUM: Option<u32> = None;
 }
 
 impl PinMode for Input<Floating> {
-    const CNF: u32 = 0b01;
-    const MODE: u32 = 0b00;
-    const PULL: Option<bool> = None;
+    const PMODE: u32 = 0b00;
+    const PUPD: u32 = 0b00;
 }
 
 impl PinMode for Input<PullDown> {
-    const CNF: u32 = 0b10;
-    const MODE: u32 = 0b00;
-    const PULL: Option<bool> = Some(false);
+    const PMODE: u32 = 0b00;
+    const PUPD: u32 = 0b10;
 }
 
 impl PinMode for Input<PullUp> {
-    const CNF: u32 = 0b10;
-    const MODE: u32 = 0b00;
-    const PULL: Option<bool> = Some(true);
+    const PMODE: u32 = 0b00;
+    const PUPD: u32 = 0b01;
 }
 
 impl PinMode for Output<OpenDrain> {
-    const CNF: u32 = 0b01;
-    const MODE: u32 = 0b11;
+    const PMODE: u32 = 0b01;
+    const OTYPE: Option<bool> = Some(true);
 }
 
 impl PinMode for Output<PushPull> {
-    const CNF: u32 = 0b00;
-    const MODE: u32 = 0b11;
+    const PMODE: u32 = 0b01;
+    const OTYPE: Option<bool> = Some(false);
 }
 
 impl PinMode for Analog {
-    const CNF: u32 = 0b00;
-    const MODE: u32 = 0b00;
+    const PMODE: u32 = 0b11;
 }
 
-impl PinMode for Alternate<PushPull> {
-    const CNF: u32 = 0b10;
-    const MODE: u32 = 0b11;
+impl<const A: u8> PinMode for Alternate<A, PushPull> {
+    const PMODE: u32 = 0b10;
+    const OTYPE: Option<bool> = Some(false);
+    const AFNUM: Option<u32> = Some(A as u32);
 }
 
-impl PinMode for Alternate<Input> {
-    const CNF: u32 = 0b01;
-    const MODE: u32 = 0b00;
-}
-
-
-impl PinMode for Alternate<OpenDrain> {
-    const CNF: u32 = 0b11;
-    const MODE: u32 = 0b11;
+impl<const A: u8> PinMode for Alternate<A, OpenDrain> {
+    const PMODE: u32 = 0b10;
+    const OTYPE: Option<bool> = Some(true);
+    const AFNUM: Option<u32> = Some(A as u32);
 }
