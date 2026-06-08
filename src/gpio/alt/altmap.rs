@@ -84,10 +84,13 @@ pub mod spi1 {
 
     impl<T> RemapIO<SPI,SPI1FullRemapRemapper> for crate::gpio::PB2<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<SPI,SPI1FullRemapRemapper> for crate::gpio::PE7<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<SPI,SPI1FullRemapRemapper> for crate::gpio::PE8<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<SPI,SPI1FullRemapRemapper> for crate::gpio::PE9<T> {
     }
 
@@ -101,17 +104,20 @@ pub mod spi1 {
         <Sck> default: PushPull for no:NoPin, [
             PA5,
             PB3,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE7,
         ],
         <Miso> default: Input for no:NoPin, [
             PA6,
             PB4,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE8,
         ],
 
         <Mosi> default: PushPull for no:NoPin, [
             PA7,
             PB5,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE9,
         ],
 
@@ -170,12 +176,16 @@ pub mod spi2 {
     impl<T> RemapIO<SPI,SPI2PartialRemapRemapper> for crate::gpio::PC9<T> {
     }
 
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<SPI,SPI2FullRemapRemapper> for crate::gpio::PE10<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<SPI,SPI2FullRemapRemapper> for crate::gpio::PE11<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<SPI,SPI2FullRemapRemapper> for crate::gpio::PE12<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<SPI,SPI2FullRemapRemapper> for crate::gpio::PE13<T> {
     }
 
@@ -183,23 +193,27 @@ pub mod spi2 {
         <Nss> default: PushPull for no:NoPin, [
             PB12,
             PC6,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE10,
         ],
 
         <Sck> default: PushPull for no:NoPin, [
             PB13,
             PC7,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE11,
         ],
         <Miso> default: Floating for no:NoPin, [
             PB14,
             PC8,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE12,
         ],
 
         <Mosi> default: PushPull for no:NoPin, [
             PB15,
             PC9,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE13,
         ],
 
@@ -213,6 +227,7 @@ pub mod spi2 {
     }
 }
 
+#[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
 pub mod spi3 {
     use super::*;
     use crate::gpio::{self, Input, PushPull};
@@ -685,6 +700,7 @@ pub mod uart4 {
     }
     impl<T> RemapIO<UART,UART4PartialRemapOneRemapper> for crate::gpio::PB2<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<UART,UART4PartialRemapOneRemapper> for crate::gpio::PE7<T> {
     }
     impl<T> RemapIO<UART,UART4PartialRemapTwoRemapper> for crate::gpio::PA13<T> {
@@ -699,6 +715,7 @@ pub mod uart4 {
     pin! {
         <Rx> default: Floating for no:NoPin, [
             PC11,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE7,
             PA14,
             PD1,
@@ -761,8 +778,10 @@ pub mod uart5 {
     }
     impl<T> RemapIO<UART,UART5PartialRemapOneRemapper> for crate::gpio::PB14<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<UART,UART5PartialRemapTwoRemapper> for crate::gpio::PE8<T> {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl<T> RemapIO<UART,UART5PartialRemapTwoRemapper> for crate::gpio::PE9<T> {
     }
     impl<T> RemapIO<UART,UART5FullRemapRemapper> for crate::gpio::PB8<T> {
@@ -774,6 +793,7 @@ pub mod uart5 {
         <Rx> default: Floating for no:NoPin, [
             PD2,
             PB14,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE9,
             PB9,
         ],
@@ -781,6 +801,7 @@ pub mod uart5 {
         <Tx> default: PushPull for no:NoPin, [
             PC12,
             PB13,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE8,
             PB8,
         ],
@@ -792,6 +813,7 @@ pub mod uart5 {
     }
 }
 
+#[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
 pub mod uart6 {
     use super::*;
     use crate::gpio::{self, PushPull,Input};
@@ -852,6 +874,7 @@ pub mod uart6 {
     }
 }
 
+#[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
 pub mod uart7 {
     use super::*;
     use crate::gpio::{self, PushPull,Input};
@@ -1122,22 +1145,31 @@ pub mod tim1 {
     impl RemapIO<TIM,TIM1PartialRemapTwoRemapper> for crate::gpio::PB15 {
     }
 
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE7 {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE9 {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE11 {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE13 {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE14 {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE15 {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE8 {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE10 {
     }
+    #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
     impl RemapIO<TIM,TIM1FullRemapRemapper> for crate::gpio::PE12 {
     }
 
@@ -1145,49 +1177,58 @@ pub mod tim1 {
     pin! {
         <Ch1> default: PushPull for no:NoPin, [
             PA8,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE7,
         ],
 
         <Ch2> default: PushPull for no:NoPin, [
             PA9,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE9,
         ],
 
         <Ch3> default: PushPull for no:NoPin, [
             PA10,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE13,
         ],
 
         <Ch4> default: PushPull for no:NoPin, [
             PA11,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE14,
         ],
         <Ch1n> default: PushPull for no:NoPin, [
             PB13,
             PA7,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE8,
         ],
 
         <Ch2n> default: PushPull for no:NoPin, [
             PB14,
             PB0,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE10,
         ],
 
         <Ch3n> default: PushPull for no:NoPin, [
             PB15,
             PB1,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE12,
         ],
 
         <Etr> default: PushPull for no:NoPin, [
             PA12,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE7,
         ],
         <Bkin> default: Floating for no:NoPin, [
             PB12,
             PA6,
             PB5,
+            #[cfg(any(feature = "n32g451", feature = "n32g452", feature = "n32g455", feature = "n32g457", feature = "n32g4fr"))]
             PE15,
         ],
     }
