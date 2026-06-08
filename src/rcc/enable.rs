@@ -89,8 +89,8 @@ bus! {
 
 bus! {
     Crc => (AHB, 6),
-    Adc1 => (AHB, 12),
-    Dma1 => (AHB, 0),
+    Adc => (AHB, 12),
+    Dma => (AHB, 0),
 }
 
 #[cfg(any(feature = "n32g435",feature = "n32g455",feature = "n32g457"))]
@@ -200,7 +200,7 @@ bus! {
 
 #[cfg(not(any(feature = "n32g401")))]
 bus! {
-    Can1 => (APB1, 25),
+    Can => (APB1, 25),
 }
 
 #[cfg(any(feature = "n32g401",feature = "n32g430"))]

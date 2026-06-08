@@ -302,6 +302,10 @@ pub const SYSCLK_MAX: u32 = 108_000_000;
 /// Maximum system clock frequency
 pub const SYSCLK_MAX: u32 = 144_000_000;
 
+#[cfg(any(feature = "n32l403", feature = "n32l406"))]
+/// Maximum system clock frequency (N32L40x core max is 64 MHz)
+pub const SYSCLK_MAX: u32 = 64_000_000;
+
 
 /// Maximum APB2 peripheral clock frequency
 pub const PCLK2_MAX: u32 = SYSCLK_MAX / 2;
@@ -385,7 +389,7 @@ impl CFGR {
                 w.latency().bits(((sysclk - 1) / flash_latency_step) as u8);
                 w.prftbfe().set_bit();
                 w.icahen().set_bit()
-            })
+            });
         }
     }
 

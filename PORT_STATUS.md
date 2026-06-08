@@ -12,56 +12,67 @@ modules land.
   off pending port; zero `n32g4` references remain.
 - Toolchain pinned to `nightly-2026-06-07` (rust-toolchain.toml).
 
-## Baseline build error surface
+## Baseline build error surface (HISTORICAL -- counts unreliable, see note)
 
-`cargo build --features n32l403 --target thumbv7em-none-eabihf`: **717 errors.**
+> METRIC CORRECTION: the counts in this section and the first "current state"
+> figures were produced with `grep -c '^error'` on the build log, which
+> UNDERCOUNTS -- it misses multi-line error blocks and miscounts the summary
+> line. The authoritative count is the compiler's own
+> `--message-format=json` tally (or the "aborting due to N errors" line). The
+> "717" and "518" numbers below and in commits fcda93a/00a9e17/bfd9d5e are
+> therefore approximate/low. The QUALITATIVE findings (rcc cleared, names now
+> resolve, error mix shifted to gpio/adc) hold; only the integers were wrong.
+> See "Re-baselined" below for the real figures.
+
+Early grep-based snapshot (kept for narrative continuity, not accuracy):
+717 -> 518 across the svd2rust 0.31.5 -> 0.37.1 PAC bump.
+
+## Re-baselined (authoritative, cargo --message-format=json)
+
+After the PAC svd2rust 0.37.1 bump + RCC.CFG enum enrichment + SYSCLK_MAX
+const for n32l403/n32l406:
+
+`cargo build --features n32l403 --target thumbv7em-none-eabihf`:
+**656 true errors** (compiler count).
 
 By module:
-| module                | errors | notes |
-|-----------------------|-------:|-------|
-| gpio/alt + alt/altmap |    366 | chip-specific AF pin-mux tables (>half the total) |
-| adc                   |    135 | |
-| rcc/enable            |    117 | `bus!` macro: peripheral->bus->enable-bit maps |
-| afio                  |     89 | |
-| gpio/convert + gpio   |     92 | |
-| pwm                   |     40 | |
-| i2c                   |     33 | not needed by firmware |
-| rcc/mod               |     28 | |
-| spi                   |     27 | |
-| timer                 |     22 | |
-| serial               |     21 | not needed by firmware |
-| can                   |     11 | |
-| (dma/pwr/usb/sac/...) | small  | not needed by firmware |
+| module | errors |
+|--------|-------:|
+| gpio   |    282 |
+| adc    |    235 |
+| pwm    |     58 |
+| serial |     39 |
+| spi    |     16 |
+| can    |     14 |
+| dma    |      6 |
+| i2c    |      3 |
+| fmc    |      2 |
+| sac    |      1 |
+| **rcc**  | **0** (DONE) |
+| **afio** | **0** (cleared by the naming bump) |
 
-By error code: 432 E0425 (name resolution), 147 E0592 (dup defs, mostly
-gpio/alt), 60 E0599 (no method), 44 E0432 + 33 E0433 (unresolved paths).
+By error code: 238 E0592 (duplicate defs -- the gpio AF-table dup-defs),
+200 E0425 (name resolution -- HAL assumes a bigger device: Adc2/3/4, Spi3,
+Uart6/7, PE/PF pins that N32L403 lacks), 172 E0599 (no method), 22 E0308,
+13 E0432, 11 E0433.
 
-## Current state (after PAC svd2rust 0.37.1 bump + RCC.CFG enums)
+ROOT CAUSE recap: the bulk of the original errors were the PAC identifier
+shape, not missing enums. The HAL targets the n32g4 shape
+(`Sclksw`/`SclkswR`/`Rcc`) = svd2rust 0.32+ default theme; the PAC had been
+0.31.5 (legacy `SCLKSW_A`/`RCC`). Bumping to 0.37.1 fixed naming fleet-wide
+and gave PascalCase peripheral names (the `RCC`->`Rcc` casing item resolved
+with no patch). rcc and afio are now fully clear.
 
-`cargo build --features n32l403 --target thumbv7em-none-eabihf`: **518 errors**
-(down from 717).
+The remaining work is dominated by **gpio (282) + adc (235) = 517 of 656**,
+both driven by the HAL assuming a larger device than the N32L403/406 (more
+ADCs, more SPIs, more GPIO ports/pins). That is the core porting task: trim
+the HAL's device assumptions to match L4 silicon. Note adc is much bigger
+than the early grep suggested (235, not ~131), while i2c/dma/serial are much
+smaller -- the "stub the unused peripherals" idea is a minor win, not a major
+one.
 
-ROOT CAUSE of the bulk of the baseline errors was the PAC identifier shape, not
-just missing enums. The HAL targets the n32g4 shape (`Sclksw`/`SclkswR`/`Rcc`),
-which is the svd2rust **0.32+** default theme; the PAC had been generated with
-0.31.5, which emits the legacy `SCLKSW_A`/`SCLKSW_R`/`RCC` shape. Bumping the
-PAC generator to 0.37.1 fixed the naming fleet-wide AND gave PascalCase
-peripheral names (so the `RCC`->`Rcc` casing item below is resolved with no
-separate patch). The RCC.CFG enum enrichment (Sclksw/Ahbpres/Apb1pres) landed
-in the same PAC pass.
-
-Error-code shift (the healthy kind): E0425 432->209 (naming fixed), E0432
-44->13, E0433 33->11. E0599 60->148 and a new 23x E0308 appeared -- expected:
-names now resolve, so the compiler reaches method-call/type checking and
-surfaces the real per-module API porting work.
-
-By module (error-line references, counts overlap): gpio 396 (the AF-table
-bulk), adc 131, afio 84, **rcc 69** (down from 145 = enable 117 + mod 28), pwm
-34, i2c 28, serial 19, spi 16, can 14, dma 12.
-
-Next: rcc/mod + rcc/enable residual (the `bus!` enable-bit maps and method
-diffs -- no longer an enum problem), then the gpio AF-table trim, then the
-cold-path peripherals.
+Milestone status: M1 rcc DONE. M2 afio DONE (no work needed). Next targets
+by leverage: gpio and adc.
 
 ## Port plan (dependency order)
 
