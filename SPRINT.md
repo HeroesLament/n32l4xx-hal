@@ -160,6 +160,48 @@ Re-measure both devices after each step; commit each green.
 Same instance-name + device-shape trim as rcc/enable.rs, plus likely enum
 enrichment for sequence/sample-time fields.
 
+#### REFERENCE TO APE: stm32f4xx-hal (the canonical F4/L4-model HAL)
+
+The N32L40x GPIO is the STM32-F4 register model. `stm32f4xx-hal/src/gpio.rs`
+(github stm32-rs/stm32f4xx-hal, MIT/Apache -- MIRROR THE PATTERN, do not paste
+verbatim; our HAL is 0BSD) is the proven implementation to transcribe. Their
+registers map 1:1 to ours:
+  moder->pmode | otyper->pot | ospeedr->sr | pupdr->pupd | afrl->afl |
+  afrh->afh | bsrr->pbsc | odr->pod | idr->pid
+Their PAC uses indexed accessors `w.ospeedr(N)`; OUR PAC uses numbered fields
+`w.sr{N}()`, `w.pmode{N}()`, `w.pot{N}()`, `w.pupd{N}()`, `afl/afh.afsel{N}()`
+(afh indexes afsel0..7 for pins 8..15).
+
+Key patterns to adopt from their gpio.rs:
+1. Type-state: `pub struct Alternate<const A: u8, Otype = PushPull>(...)`;
+   `pub type Debugger = Alternate<0, PushPull>`. All marker impls become
+   `impl<const A: u8, Otype> marker::X for Alternate<A, Otype>`.
+2. `af!` macro generating `pub type AF0..AF15<Otype=PushPull> = Alternate<n,
+   Otype>` aliases.
+3. `marker::IntoAf<const A: u8>` trait. The gpio! macro emits, PER PIN, one
+   `impl<MODE> marker::IntoAf<$A> for PXi<MODE> {}` for each AF number that
+   pin legally supports. THIS is how correct muxing is enforced by the type
+   system: a peripheral pin trait is bounded `IntoAf<4>` etc., so only pins
+   that expose that function at that AF# satisfy it. <-- this is exactly where
+   the DATASHEET per-pin AF column plugs in (the [$($A:literal),*] list in the
+   gpio! macro per-pin row).
+4. set_speed / set_internal_resistor become CLEAN one-liners against sr/pupd
+   (no 16-arm match). Ours currently has the F1 16-arm pl_cfg/ph_cfg match in
+   gpio.rs + convert.rs -- replace with the one-liner form.
+5. convert.rs mode(): could NOT fetch their convert.rs (only gpio.rs). But the
+   contract is clear -- mode() writes pmode{N} (00 in/01 out/10 alt/11 analog)
+   + pot{N} + pupd{N}, and for Alternate<A,_> writes A into afl/afh.afsel{N}.
+   Our existing convert.rs mode() skeleton (3 copies: Pin/Erased/PartiallyEr.)
+   stays; just re-point the register writes. Fetch their convert.rs next
+   session if the mode() body needs more detail:
+   https://github.com/stm32-rs/stm32f4xx-hal/blob/master/src/gpio/convert.rs
+
+NOTE the gpio! macro row format changes to carry the AF list:
+  `PXi: (pxi, N, [AF list] $(, $MODE)?),` -- the [$($A:literal),*] is the set
+  of AF numbers valid for that pin, sourced from the DATASHEET pin-mux table.
+  (SDK gives peripheral->AF#; datasheet gives pin->AF#. Need both. For
+  firmware-only scope, fill the AF lists for just the pins the firmware uses.)
+
 #### CRITICAL WORKFLOW WARNING -- MCP server instability
 
 The tmux/filesystem MCP server hung 3x during the previous session, each on
