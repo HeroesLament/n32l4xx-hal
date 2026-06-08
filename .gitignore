@@ -1,0 +1,11 @@
+**/*.rs.bk
+.#*
+.gdb_history
+/book/*/book
+/target
+Cargo.lock
+*.hex
+book-target/
+
+.DS_Store
+/.vscode/*
