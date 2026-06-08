@@ -196,6 +196,20 @@ Key patterns to adopt from their gpio.rs:
    session if the mode() body needs more detail:
    https://github.com/stm32-rs/stm32f4xx-hal/blob/master/src/gpio/convert.rs
 
+   AF-WRITE ALGORITHM (from the ST C HAL HAL_GPIO_Init, authoritative):
+     reg   = (N >> 3)        // 0 => AFL (pins 0-7), 1 => AFH (pins 8-15)
+     nib   = (N & 7) * 4     // bit offset of this pin's 4-bit field
+     AFR[reg] = (AFR[reg] & ~(0xF << nib)) | (A << nib)
+   In OUR svd2rust PAC the per-field accessors do the mask/shift for us, so
+   this collapses to (for Alternate<A,_>):
+     if N < 8 { gpio.afl().modify(|_,w| unsafe { w.afsel{N}().bits(A) }) }
+     else     { gpio.afh().modify(|_,w| unsafe { w.afsel{N-8}().bits(A) }) }
+   and the mode nibble is just `gpio.pmode().modify(|_,w| unsafe {
+   w.pmode{N}().bits(0b10) })` (0b10 = alternate), plus pot{N}/pupd{N}.
+   So mode() is a 16-arm match (or a helper indexed by N) writing pmode+pot+
+   pupd, and additionally afsel for the Alternate case. No mystery remains;
+   the convert.rs fetch is optional polish, not a blocker.
+
 NOTE the gpio! macro row format changes to carry the AF list:
   `PXi: (pxi, N, [AF list] $(, $MODE)?),` -- the [$($A:literal),*] is the set
   of AF numbers valid for that pin, sourced from the DATASHEET pin-mux table.
