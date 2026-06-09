@@ -1,0 +1,37 @@
+n32l4xx-hal
+===========
+
+A peripheral HAL for the NSING N32L4xx (N32L403 / N32L406) microcontroller
+family, written in Rust.
+
+Attribution
+-----------
+
+This crate is a fork/port of n32g4xx-hal:
+
+    https://github.com/guineawheek/n32g4xx-hal
+
+originally authored by Sparrowgrine and guineawheek, and licensed
+Apache-2.0 OR MIT. The N32L4xx port retargets that work to a different chip
+family (NSING N32L4xx) and diverges where the silicon differs from the N32G4xx
+(notably the GPIO alternate-function model: N32L4xx uses per-pin AFL/AFH
+selection rather than the N32G4xx AFIO remap-group mechanism).
+
+Portions of this crate that derive from n32g4xx-hal remain under the original
+Apache-2.0 OR MIT terms; their copyright is retained by the original authors.
+Modifications and the N32L4xx port are copyright the n32l4xx-hal contributors.
+
+License
+-------
+
+Licensed under either of
+
+  * Apache License, Version 2.0 (LICENSE-APACHE)
+  * MIT license (LICENSE-MIT)
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally
+submitted for inclusion in the work by you, as defined in the Apache-2.0
+license, shall be dual licensed as above, without any additional terms or
+conditions.
