@@ -27,19 +27,33 @@ E0599 172, E0308 22, E0432 13, E0433 11.
   enable.rs + mod.rs now error-free (only cosmetic n32g4 cfg-value warnings).
 - [x] **M2 afio** -- DONE with no work; the svd2rust 0.37.1 naming bump
   cleared it.
-- [ ] **M3 gpio (282)** -- the big one. Bulk is E0592 dup-defs in
-  alt.rs/altmap.rs plus E0425 for ports/pins the N32L403 lacks (PE/PF). FULL
-  port: every package pin the device actually has; remove AF entries for
-  pins/peripherals not present (Spi3, Uart6/7, etc.).
-- [ ] **M4 adc (235)** -- larger than first thought. HAL assumes Adc1..Adc4;
-  N32L4 has a single ADC. Trim to the real device + enum-enrich as needed.
-- [ ] **M5 cold-path: pwm (58), spi (16), can (14)** -- firmware-critical.
-  Enum pattern recurs (timer modes, spi cpol/baud, can bit timing).
-- [ ] **M6 remaining: serial (39), dma (6), i2c (3), fmc (2), sac (1), usb**
-  -- not firmware-used but required for a full HAL compile.
+- [x] **M3 gpio (was 282/303)** -- DONE (commit `589ac3e`). Full STM32-style
+  per-pin AF rewrite. gpio now contributes 4 errors (down from ~303), all in
+  gpio/dynamic.rs (old CNF/MODE/PULL PinMode leftover, folds into M5 driver
+  work). See HANDOFF below for the architecture and the AF-table provenance.
+- [ ] **M4 driver Remap removal (the new M3-consequence)** -- the altmap
+  rewrite deleted the Remap/RemapIO/Remapper layer, so every driver that was
+  generic over `RMP: Remap` no longer compiles. Files + error counts (n32l403,
+  json): pwm.rs 61, spi.rs 32, can.rs 18, serial.rs 15, serial/uart_impls.rs
+  5, gpio/dynamic.rs 4. Drop the `RMP: Remap` generic + `RMP::remap(afio)`
+  calls; change pin bounds `RemapIO<Self,RMP> + Into<...>` -> just `Into<...>`.
+  This changes the public constructor signatures (acceptable now -- servo4257
+  HAL deps are still commented out). pwm.rs is the heaviest and was NOT in the
+  original scope; it consumes the timer pins through Remap.
+- [ ] **M5 adc (25)** -- HAL assumes Adc1..Adc4; N32L4 has a single `Adc`.
+  Same instance-name + device-shape trim as rcc/enable.rs, plus likely enum
+  enrichment for sequence/sample-time fields. (Was 235 in the original
+  baseline table; the real current count is 25 -- most of the old "adc" bulk
+  was actually shared gpio/pin resolution that the M3 rewrite cleared.)
+- [ ] **M6 device-shape remainder: i2c.rs (8), dma/mod.rs (6), sac.rs (1)** --
+  i2c.rs references I2c1..I2c4 (n32g4 multi-instance; N32L4 has i2c1/i2c2
+  only). Same trim pattern. Not firmware-critical but required for full
+  compile.
 
-Note: gpio + adc = 517 of 656. Both stem from the HAL assuming a larger
-device than N32L403/406. That device-shape trim is the heart of the port.
+Note: the M3 gpio rewrite (656 -> 175) was the heart of the port. The
+remaining 175 are all in *consumers* of the old model (drivers still on
+Remap) plus the multi-instance device-shape trims (adc/i2c/dma). No more
+architecture-level surprises are expected -- M4/M5/M6 are mechanical.
 
 ## Exit criteria
 
@@ -49,118 +63,135 @@ uncomment its `n32l4` / `n32l4xx-hal` path deps.
 
 ## Notes / decisions as they land
 
-### HANDOFF (pick up here) -- M3 gpio: register-model rewrite
+### HANDOFF (pick up here) -- M4 driver Remap removal
 
-State: M1 (rcc) + M2 (afio) DONE. gpio phantom-port feature-gating DONE,
-committed at **`6904992`** (working tree clean on top of `a1a610a`). PAC at
-`fcda93a`, servo4257-rs docs at `bfd9d5e`.
+State: M1 (rcc) + M2 (afio) + **M3 (gpio) DONE**. The full STM32-style GPIO AF
+rewrite is complete and committed. Working tree clean.
 
-Error count: baseline was 656; after `6904992` it is **484** (verified
-IDENTICAL on n32l403 and n32l406). gpio went 303 -> 131. NOTE: gpio's true
-count was **303**, not the 282 in the old baseline table below -- the 282
-predated a clean json run. Use 484 / 131 as the current numbers.
+Current commits on branch `feat/gpio-af-stm-model`:
+- `18ec5fd` -- verified N32L40x AF-table extraction tooling (tools/gpio_af/).
+- `589ac3e` -- STM32-style per-pin AF altmap + pin! macro rewrite. **HEAD.**
+(These sit on top of the earlier rcc/licensing work. The branch has not been
+merged to main yet -- decide whether to merge after the build goes green, or
+keep stacking M4-M6 on this branch.)
 
-**Read first, in order:** PORT_STATUS.md "Re-baselined", then this file, then
+Error count (json metric, verified IDENTICAL on n32l403 AND n32l406):
+baseline 656 -> **175** after `589ac3e`. gpio went ~303 -> 4 (the 4 are in
+gpio/dynamic.rs, an old-model leftover that folds into M4).
+
+**Read first, in order:** PORT_STATUS.md "Re-baselined", this file's Milestones
++ this HANDOFF, then tools/gpio_af/README.md (AF-table provenance), then
 AGENTS.md + DECISIONS.md in ../servo4257-rs.
+
+#### What M3 did (DONE -- the architecture is settled, do not relitigate)
+
+The N32L40x uses the STM32-F4/L4 GPIO model: per-pin 4-bit AF number written
+to GPIOx_AFL (pins 0-7) / GPIOx_AFH (pins 8-15). Confirmed three ways: SDK
+`GPIO_ConfigPinRemap()` computes `AFL/AFH |= AF << (pin*4)`; the UM register
+defs show `AFSEL0[3:0]`..`AFSEL15[3:0]`; and convert.rs::set_mode_bits already
+writes those nibbles. The n32g4 Remap/RemapIO/Remapper model (AFIO remap-group
+selectors) was the WRONG model and is now gone from altmap.rs.
+
+Landed in `589ac3e`:
+- **gpio.rs / convert.rs** already carried `Alternate<const A: u8, Otype =
+  PushPull>` and the AFL/AFH-writing `set_mode_bits` (from earlier work). Only
+  `Alternate<A, PushPull>` and `Alternate<A, OpenDrain>` have PinMode impls --
+  so every AF pin is PushPull or OpenDrain; RX/MISO/timer-inputs are
+  alternate-push-pull (the "floating/input" character is the peripheral's
+  data direction, not the AF pad mode).
+- **pin! macro (gpio/alt.rs):** deleted the dead first arm; the remaining arm
+  takes per-pin AF numbers `PXn: AF,` and expands each entry to
+  `gpio::PXn<Alternate<AF, Otype>>`.
+- **altmap.rs:** fully regenerated (1436 -> 855 lines), RemapIO layer deleted.
+  19 modules, full N32L403/406 coverage: spi1/2, usart1-3, uart4/5, lpuart,
+  tim1-5/8/9, lptim, i2c1/2, can. 191 pin entries, every AF# traceable to the
+  verified table.
+
+#### THE AF-TABLE (the hard-won asset -- reuse it, don't re-derive)
+
+The authoritative per-pin (signal, pin, AF#) map lives in
+**tools/gpio_af/af_table_um.tsv** -- 314 triples, 0 conflicts, extracted from
+the N32L40x User Manual V2.5.0 Tables 5-6..5-29 and manual-verified for
+SPI1/USART1/CAN/TIM1/TIM5/TIM8/I2C1/LPTIM. The UM PDF
+(`EN_UM_N32L40x_Series_User_Manual_V2.5.0.pdf`) is gitignored at repo root
+(kept locally). altmap.rs is generated from this table by
+**tools/gpio_af/generate_altmap.py** (`python3 generate_altmap.py` -> writes
+altmap.generated.rs; the committed home is src/gpio/alt/altmap.rs). The only
+hand-authored part of the generator is MODULE_SPEC (signal-name -> module /
+enum / trait wiring); pin/AF data is never hand-entered. README.md in that dir
+has full provenance + the bbox/DP-segmentation parser story.
+
+If altmap needs regen (e.g. adding a signal): edit MODULE_SPEC, run the
+generator, `cp altmap.generated.rs ../../src/gpio/alt/altmap.rs`, rebuild.
+A pre-rewrite RemapIO backup is at tools/gpio_af/altmap.rs.remapio-backup
+(gitignored) for reference.
+
+#### M4 PLAN -- remove the Remap generic from the drivers (pick up here)
+
+The altmap rewrite deleted Remap/RemapIO/Remapper, so the drivers that were
+generic over `RMP: Remap` no longer compile. This is the bulk of the current
+175 errors. Files (n32l403 json counts): pwm.rs 61, spi.rs 32, can.rs 18,
+serial.rs 15, serial/uart_impls.rs 5, gpio/dynamic.rs 4.
+
+Per file, mechanically:
+- Drop the `<RMP: Remap, ...>` generic parameter from constructors.
+- Delete the `RMP::remap(afio)` calls (the per-pin `.into()`/`into_mode()`
+  conversion now does the AFL/AFH muxing -- there is nothing left to remap).
+- Change pin bounds `crate::gpio::alt::altmap::RemapIO<Self,RMP> +
+  Into<Self::Sck>` -> just `Into<Self::Sck>` (and Miso/Mosi/Nss/Rx/Tx/etc.).
+- The `afio` argument to the constructors may become unused -- decide per
+  driver whether to drop it (cleaner) or keep it `_afio` for API stability.
+  Dropping it changes public signatures; that is ACCEPTABLE NOW because
+  servo4257-rs's HAL path deps are still commented out (ideal window for
+  breaking API changes -- see DECISIONS.md).
+- gpio/dynamic.rs (4 errors) references the old CNF/MODE/PULL PinMode consts;
+  re-point to the L4 pmode/pot/pupd model (same as convert.rs already does).
+
+Start with pwm.rs (heaviest) or spi.rs (firmware-critical / encoder path) --
+your call. Commit each driver green and separately. Re-measure BOTH devices
+after each (they have tracked identically all along).
+
+NOT YET SPOT-CHECKED: the generated timer/i2c/lptim modules were verified
+against the UM for a sample (TIM1/5/8, I2C1, LPTIM all correct); tim2/3/4/9
+and i2c2 came from the same parser but were eyeballed less. Low risk (0
+parser conflicts, SPI/USART/CAN all exact), but worth a glance if a timer pin
+misbehaves on hardware later.
+
+#### After M4: M5 adc (25), M6 i2c/dma/sac (15)
+
+M5 adc: HAL assumes Adc1..Adc4; N32L4 has a single `Adc`. Same instance-name
++ device-shape trim as rcc/enable.rs, plus likely enum enrichment for
+sequence/sample-time fields (PAC-layer svdtools, SDK-verified values -- see
+the recurring technique at the top of this file).
+M6: i2c.rs references I2c1..I2c4 (n32g4 multi-instance); trim to i2c1/i2c2.
+dma/mod.rs (6), sac.rs (1) similar device-shape trims.
+
+Exit criteria unchanged: both `--features n32l403` and `--features n32l406`
+build with zero errors, then servo4257-rs can uncomment its path deps.
 
 #### How to measure errors (DO NOT use grep -c '^error')
 
 `grep -c '^error'` UNDERCOUNTS (misses multi-line blocks). Use the compiler's
-json count:
+json count. Keep tool calls SHORT (see MCP warning below): kick the build with
+its own `tmux wait-for -S <chan>` + redirect, read/parse in a SEPARATE call.
 ```
 cargo build --features n32l403 --target thumbv7em-none-eabihf \
-  --message-format=json 2>/dev/null > /tmp/b.json
+  --message-format=json 2>/dev/null | python3 -c '...'
 ```
-Tally /tmp/b.json: records where `reason==compiler-message` &&
-`message.level==error`, skip the one whose message starts with "aborting".
-Group by first `src/<mod>` in `spans[].file_name`. Re-measure BOTH devices.
-NOTE: the filesystem MCP is sandboxed to ~/src; write scratch analyzers INTO
-the repo (e.g. scratch_*.py) and `rm` them before committing -- /tmp is not
-writable via filesystem tools but IS readable/writable via tmux/bash.
+Tally records where `reason==compiler-message` && `message.level==error`
+(skip the one whose message starts with "aborting"); group by the primary
+span's `file_name`. Re-measure BOTH devices (they have tracked identically:
+656 then 175 on each). The filesystem MCP is sandboxed to ~/src and /tmp is
+NOT readable by it (use tmux/bash for /tmp, or write scratch into the repo and
+rm before committing).
 
-#### What `6904992` did (DONE)
+#### REFERENCE (historical) -- stm32f4xx-hal, the model we mirrored for M3
 
-Feature-gated the phantom PE/PF/PG references in src/gpio/alt/altmap.rs using
-the SAME positive-cfg idiom already in gpio.rs:
-`#[cfg(any(feature = "n32g451", "n32g452", "n32g455", "n32g457", "n32g4fr"))]`.
-The N32L4 Cargo.toml never sets those features, so the code compiles out while
-preserving upstream family shape. Gated 3 whole phantom modules (spi3, uart6,
-uart7 -- peripherals absent from the PAC) + scattered phantom PE pin rows in
-spi1/spi2/uart4/uart5/tim1 (both the RemapIO impls and the pin! array entries;
-the pin! macro supports per-entry #[cfg] by design).
-
-#### THE BIG FINDING -- the remaining 131 gpio errors are a WRONG-ARCHITECTURE
-#### problem, not enum enrichment. DO NOT try Option-A PAC enrichment here.
-
-The n32g4 HAL is written for the **STM32-F1 / n32g4 GPIO model**:
-`pl_cfg`/`ph_cfg` registers with 2-bit CNF+MODE per pin, and "alternate
-function" = a CNF code with NO af-number, plus an AFIO peripheral-REMAP scheme
-(`rmp_cfg`/`rmp_cfg3` + per-peripheral `*_rmp` selector bits).
-
-The **N32L40x is the STM32-F4/L4 model** (verified against the vendor SDK,
-which is authoritative -- do NOT copy n32g4):
-- PAC gpioa block exposes: `pmode{N}` (2-bit mode: 00 in / 01 out / 10 ALT /
-  11 analog), `pot{N}` (1-bit push-pull/open-drain), `pupd{N}` (2-bit
-  none/pu/pd), `sr{N}` (1-bit slew), `afl`/`afh` each with `afsel0..afsel7`
-  (4-bit AF selector per pin; afl = pins 0-7, afh = pins 8-15), plus
-  pod/pid/pbsc/pbc/plock. There is NO pl_cfg/ph_cfg.
-- AF selection is per-pin: write a 4-bit AF code into afsel{N} of afl (N<8)
-  or afh (N>=8). Confirmed by SDK `GPIO_ConfigPinRemap()` in
-  n32l40-sdk/firmware/n32l40x_std_periph_driver/src/n32l40x_gpio.c (~line 571).
-- The AFIO `RMP_CFG` register is NOT a peripheral remap selector. Its only
-  real fields (SDK n32l40x.h ~line 7266): SPI1_NSS(b11) SPI2_NSS(b10)
-  ADC_ETRI(b9) ADC_ETRR(b8) EXTI_ETRI(b4..7) EXTI_ETRR(b0..3). There is NO
-  RMP_CFG3 and NO `*_rmp` peripheral selectors anywhere on this silicon.
-  Adding them to the PAC would be INVENTING registers -- forbidden.
-
-AF-number assignment table (peripheral -> AF#) is in the SDK at
-`n32l40-sdk/firmware/n32l40x_std_periph_driver/inc/n32l40x_gpio.h` as
-`#define GPIO_AF<n>_<PERIPHERAL>`. Key ones (a peripheral can have several AFs
--- THAT is how the L4 "remaps", by choosing a different AF# on a different
-pin, not via a remap register):
-  SPI1: AF0,1,4,5,6 | SPI2: AF0,1,5 | CAN: AF1,5
-  TIM1: AF2,5,7 | TIM2: AF2,5 | TIM3: AF2,4 | TIM8: AF0,6,7
-  USART1: AF0,1,4 | USART2: AF0,4,6 | USART3: AF0,4,5,7
-  UART4: AF6 | UART5: AF6,7 | LPUART: AF2,4,6,7
-  I2C1: AF4,7 | I2C2: AF1,5,6 | COMP1/2: AF7,8(,9) | MCO: AF8 | EVENTOUT: AF3
-NOTE: this gives peripheral->AF#, but the COMPLETE mux also needs the
-per-PIN AF column (which physical pin exposes a function at which AF#) from
-the DATASHEET pin-mux table -- the SDK header does not encode pin identity.
-For firmware-critical signals (encoder SPI, TIM PWM ch, CAN) cross-check those
-specific pins; a full all-pins alt layer needs the datasheet table.
-
-#### THE PLAN (agreed: adopt the adjacent-MCU / stm32-rs paradigm verbatim)
-
-Keep alt.rs's trait system + pin! macro + type-state -- they are correct and
-device-agnostic (SpiCommon/SerialAsync/TimCPin<C>/TimNCPin<C>/TimBkin/etc.).
-DELETE the Remap/RemapIO/Remapper layer in altmap.rs (models nonexistent hw).
-Do it as SMALL, INDIVIDUALLY-COMPILING commits (intermediate states won't
-build until the chain completes, so don't leave the tree broken across a
-hang):
-
-(a) Type-state: change `Alternate<Otype>` -> `Alternate<const A: u8, Otype =
-    PushPull>` in gpio.rs (the const A carries the AF number, stm32-rs style).
-    Update the marker impls (Interruptible/Readable/OutputSpeed/Active for
-    Alternate) and `pub type Debugger`. This ripples into the pin! macro in
-    alt.rs and every `Alternate<...>` reference.
-(b) Rewrite convert.rs `mode()` (3 copies: Pin, ErasedPin, PartiallyErasedPin)
-    to the L4 registers: pmode{N}/pot{N}/pupd{N} for mode/otype/pull, and for
-    Alternate<A,_> ALSO write A into afl.afsel{N} (N<8) / afh.afsel{N-8}
-    (N>=8). Replace the PinMode CNF/MODE consts with L4 pmode/pot/pupd values.
-    Add `into_alternate::<const A: u8>()`.
-(c) Fix gpio.rs `set_speed` (uses pl_cfg/ph_cfg -> use sr{N}) and confirm
-    _set_high/_set_low/_is_* already use pbsc/pbc/pod/pid (they do).
-(d) Rebuild altmap.rs peripheral tables around (pin, AF#) pairs from the table
-    above; drop the Remapper/Remap machinery. Keep SpiCommon/Serial*/Tim*
-    impls. The AFIO RMP_CFG real fields (SPI NSS mode, ADC ETR trigger, EXTI
-    mux) are separate small helpers, not part of pin AF muxing.
-Re-measure both devices after each step; commit each green.
-
-#### M4 adc (now 222, was 235): HAL assumes Adc1..Adc4; N32L4 has ONE `Adc`.
-Same instance-name + device-shape trim as rcc/enable.rs, plus likely enum
-enrichment for sequence/sample-time fields.
-
-#### REFERENCE TO APE: stm32f4xx-hal (the canonical F4/L4-model HAL)
+[HISTORICAL: M3 is DONE. This section recorded the stm32-rs pattern we used to
+shape the GPIO rewrite. Kept for context. Note we ended up generating altmap
+from the verified AF table rather than hand-writing a gpio!/IntoAf macro --
+the per-pin AF correctness lives in the table + generator, not an IntoAf
+bound. The register-mapping table below is still a useful reference.]
 
 The N32L40x GPIO is the STM32-F4 register model. `stm32f4xx-hal/src/gpio.rs`
 (github stm32-rs/stm32f4xx-hal, MIT/Apache -- MIRROR THE PATTERN, do not paste

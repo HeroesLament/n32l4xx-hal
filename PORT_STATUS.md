@@ -11,6 +11,25 @@ modules land.
 - `lib.rs` PAC re-export arms point at `n32l4::n32l40x`; `bkp` module gated
   off pending port; zero `n32g4` references remain.
 - Toolchain pinned to `nightly-2026-06-07` (rust-toolchain.toml).
+- **M1 rcc DONE** (SYSCLK_MAX 64 MHz for n32l403/406; mod.rs + enable.rs clean).
+- **M2 afio DONE** (cleared by the svd2rust 0.37.1 naming bump).
+- **M3 gpio DONE** -- full STM32-style per-pin AF rewrite (commit `589ac3e` on
+  branch `feat/gpio-af-stm-model`). See SPRINT.md HANDOFF for the architecture.
+  Licensing also settled: both repos dual Apache-2.0 OR MIT.
+
+## Current state (authoritative)
+
+`cargo build --features n32l403` AND `--features n32l406`
+(`--target thumbv7em-none-eabihf`, json metric): **175 errors each**, identical.
+Down from the 656 baseline. The GPIO AF layer (gpio/alt.rs + gpio/alt/altmap.rs)
+contributes ZERO errors -- the macro and generated table compile cleanly.
+
+Remaining 175, by file (n32l403): pwm.rs 61, spi.rs 32, adc.rs 25, can.rs 18,
+serial.rs 15, i2c.rs 8, dma/mod.rs 6, serial/uart_impls.rs 5, gpio/dynamic.rs 4,
+sac.rs 1. All are *consumers* of the now-deleted Remap model (M4: pwm/spi/can/
+serial/dynamic) or multi-instance device-shape trims (M5 adc, M6 i2c/dma/sac).
+No architecture-level surprises remain -- the heavy lifting (the GPIO model) is
+done. See SPRINT.md for the M4-M6 plan and the AF-table provenance.
 
 ## Baseline build error surface (HISTORICAL -- counts unreliable, see note)
 
