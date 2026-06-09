@@ -11,15 +11,16 @@ This crate is a fork/port of n32g4xx-hal:
 
     https://github.com/guineawheek/n32g4xx-hal
 
-originally authored by Sparrowgrine and guineawheek, and licensed
-Apache-2.0 OR MIT. The N32L4xx port retargets that work to a different chip
-family (NSING N32L4xx) and diverges where the silicon differs from the N32G4xx
-(notably the GPIO alternate-function model: N32L4xx uses per-pin AFL/AFH
-selection rather than the N32G4xx AFIO remap-group mechanism).
+originally authored by Sparrowgrine and guineawheek. The N32L4xx port
+retargets that work to a different chip family (NSING N32L4xx) and diverges
+where the silicon differs from the N32G4xx (notably the GPIO alternate-function
+model: N32L4xx uses per-pin AFL/AFH selection rather than the N32G4xx AFIO
+remap-group mechanism).
 
-Portions of this crate that derive from n32g4xx-hal remain under the original
-Apache-2.0 OR MIT terms; their copyright is retained by the original authors.
-Modifications and the N32L4xx port are copyright the n32l4xx-hal contributors.
+This crate (the N32L4xx port and all modifications) is licensed Apache-2.0 OR
+MIT, as stated below. Portions deriving from n32g4xx-hal retain the copyright
+of their original authors. If you redistribute, verify the upstream's current
+license terms against its repository and honor them.
 
 License
 -------
