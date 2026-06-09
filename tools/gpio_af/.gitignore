@@ -1,0 +1,21 @@
+# Throwaway inspectors / intermediate dumps from the AF-table extraction.
+# The KEPT artifacts are: af_map.txt, pins.tsv, build_af_table.py,
+# parse_um_bbox2.py, af_table_um.tsv, um_af_remap_raw.txt, README.md.
+_*.py
+_*.txt
+*_summary.txt
+s.txt
+usart1_region.txt
+um_af_bbox.html
+
+# Superseded parsers (line-order + bbox v1, both buggy; v2 is authoritative).
+parse_um_bbox.py
+parse_um_remap.py
+# Old intersection-approach outputs (af_table_um.tsv supersedes these).
+af_table.tsv
+af_ambiguous.tsv
+af_unmapped.tsv
+# SDK-example harvest scratch.
+example_afuse.txt
+example_calls.txt
+summary.txt

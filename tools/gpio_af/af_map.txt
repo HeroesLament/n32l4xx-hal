@@ -1,0 +1,87 @@
+# N32L40x peripheral-function -> AF number map.
+# Transcribed verbatim from the vendor SDK header:
+#   n32l40x_std_periph_driver/inc/n32l40x_gpio.h  (v1.2.2)
+#   section "GPIOx_Alternate_function_selection"
+# Format: one "AF<n> PERIPH" per line. PERIPH is the SDK macro suffix
+# (GPIO_AF<n>_<PERIPH>). These are PERIPHERAL-level names, not per-pin
+# signal names; the per-pin signal->peripheral mapping comes from the
+# datasheet pin table (pins.tsv) and is intersected in build_af_table.py.
+#
+# This file is hand-transcribed data, not generated. Verify against the header before trusting.
+
+AF0  SW_JTAG
+AF0  SPI1
+AF0  LPTIM
+AF0  SPI2
+AF0  TIM8
+AF0  USART1
+AF0  USART3
+AF0  LPUART
+AF0  USART2
+
+AF1  TIM5
+AF1  USART1
+AF1  I2C2
+AF1  CAN
+AF1  SPI2
+AF1  TIM9
+AF1  SPI1
+AF1  I2C1
+
+AF2  TIM2
+AF2  TIM3
+AF2  TIM1
+AF2  LPTIM
+AF2  TIM4
+AF2  LPUART
+
+AF3  EVENTOUT
+
+AF4  USART2
+AF4  LPUART
+AF4  USART1
+AF4  TIM3
+AF4  SPI1
+AF4  I2C1
+AF4  USART3
+
+AF5  TIM2
+AF5  TIM1
+AF5  SPI1
+AF5  SPI2
+AF5  I2C2
+AF5  LPTIM
+AF5  CAN
+AF5  USART3
+
+AF6  USART2
+AF6  LPUART
+AF6  TIM5
+AF6  TIM8
+AF6  I2C2
+AF6  UART4
+AF6  UART5
+AF6  SPI1
+
+AF7  COMP1
+AF7  COMP2
+AF7  I2C1
+AF7  TIM8
+AF7  TIM5
+AF7  LPUART
+AF7  UART5
+AF7  TIM1
+AF7  USART3
+
+AF8  COMP1
+AF8  COMP2
+AF8  LPTIM
+AF8  MCO
+
+AF9  RTC
+AF9  COMP1
+AF9  TSC
+
+AF10 LCD
+
+AF11 LCD

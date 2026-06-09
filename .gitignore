@@ -9,3 +9,7 @@ book-target/
 
 .DS_Store
 /.vscode/*
+
+# Large vendor reference PDF (18 MB) — kept locally, not committed.
+# Provenance/extraction documented in tools/gpio_af/.
+EN_UM_N32L40x_Series_User_Manual_V2.5.0.pdf

@@ -1,0 +1,630 @@
+                          Table 5-5 ADC external trigger regular conversion alternate function remapping
+
+   Alternate function                        ADC_ETRR = 0                                          ADC_ETRR = 1
+ ADC external trigger    ADC external trigger regular conversion is connected to     ADC external trigger regular conversion and
+    rule conversion                           EXTI (0 - 15).                                  TIM8_TRGO connection.
+
+         TIMx alternate function remapping
+5.2.5.6.1 TIM1 alternate function remapping
+                                            Table 5-6 TIM1 alternate function remapping
+
+            Alternate function                                  Pin                                       Remap
+               TIM1_ETR                                        PA12                                         AF2
+               TIM1_CH1                                         PA8                                         AF2
+               TIM1_CH2                                         PA9                                         AF2
+               TIM1_CH3                                        PA10                                         AF2
+               TIM1_CH4                                        PA11                                         AF2
+                                                                PA6                                         AF5
+               TIM1_BKIN
+                                                               PB12                                         AF5
+                                                               PB13                                         AF2
+               TIM1_CH1N                                        PA7                                         AF5
+                                                               PC13                                         AF2
+                                                               PB14                                         AF2
+               TIM1_CH2N                                        PB0                                         AF5
+                                                                PB6                                         AF7
+                                                               PB15                                         AF2
+               TIM1_CH3N                                        PB1                                         AF5
+                                                               PD14                                         AF2
+
+5.2.5.6.2 TIM2 alternate function remapping
+                                            Table 5-7 TIM2 alternate function remapping
+
+            Alternate function                                  Pin                                       Remap
+                                                                PA0                                         AF5
+               TIM2_ETR
+                                                               PA15                                         AF2
+               TIM2_CH1                                         PA0                                         AF2
+
+
+                                                               97 / 651
+                                                                                     nsing.com.sg
+
+
+        Alternate function                      Pin                          Remap
+                                               PA15                           AF5
+                                               PA1                            AF2
+           TIM2_CH2
+                                                PB3                           AF2
+                                               PA2                            AF2
+           TIM2_CH3
+                                               PB10                           AF2
+           TIM2_CH4                            PB11                           AF2
+
+5.2.5.6.3 TIM3 alternate function remapping
+                               Table 5-8 TIM3 alternate function remapping
+
+        Alternate function                      Pin                          Remap
+           TIM3_ETR                            PD2                            AF2
+                                               PA6                            AF2
+           TIM3_CH1                             PB4                           AF2
+                                                PC6                           AF2
+                                               PA7                            AF2
+           TIM3_CH2                             PB5                           AF4
+                                                PC7                           AF2
+                                                PB0                           AF2
+           TIM3_CH3
+                                                PC8                           AF2
+                                                PB1                           AF2
+           TIM3_CH4
+                                                PC9                           AF2
+
+5.2.5.6.4 TIM4 alternate function remapping
+                               Table 5-9 TIM4 alternate function remapping
+
+        Alternate function                      Pin                          Remap
+           TIM4_CH1                             PB6                           AF2
+           TIM4_CH2                             PB7                           AF2
+           TIM4_CH3                             PB8                           AF2
+           TIM4_CH4                             PB9                           AF2
+
+5.2.5.6.5 TIM5 alternate function remapping
+                              Table 5-10 TIM5 alternate function remapping
+
+        Alternate function                      Pin                          Remap
+           TIM5_CH1                            PA0                            AF1
+           TIM5_CH2                            PA1                            AF7
+           TIM5_CH3                            PA2                            AF6
+           TIM5_CH4                            PA3                            AF7
+
+
+
+
+                                              98 / 651
+                                                                                            nsing.com.sg
+
+
+5.2.5.6.6 TIM8 alternate function remapping
+                                     Table 5-11 TIM8 alternate function remapping
+
+          Alternate function                           Pin                          Remap
+             TIM8_ETR                                  PA0                           AF7
+             TIM8_CH1                                  PC6                           AF6
+             TIM8_CH2                                  PC7                           AF6
+             TIM8_CH3                                  PC8                           AF6
+             TIM8_CH4                                  PC9                           AF6
+             TIM8_BKIN                                 PA6                           AF6
+             TIM8_CH1N                                 PA7                           AF6
+             TIM8_CH2N                                 PB0                           AF7
+             TIM8_CH3N                                 PB1                           AF0
+
+5.2.5.6.7 TIM9 alternate function remapping
+                                     Table 5-12 TIM9 alternate function remapping
+
+          Alternate function                           Pin                          Remap
+             TIM9_ETR                                  PB2                           AF1
+             TIM9_CH1                                 PB12                           AF1
+             TIM9_CH2                                 PB13                           AF1
+             TIM9_CH3                                 PB14                           AF1
+             TIM9_CH4                                 PB15                           AF1
+
+        LPTIM alternate function remapping
+                                    Table 5-13 LPTIM alternate function remapping
+
+          Alternate function                           Pin                          Remap
+                                                       PB5                           AF2
+             LPTIM_IN1
+                                                       PC0                           AF0
+                                                       PB7                           AF5
+             LPTIM_IN2
+                                                       PC2                           AF2
+                                                       PB2                           AF2
+            LPTIM_OUT
+                                                       PC1                           AF0
+                                                       PB6                           AF8
+             LPTIM_ETR
+                                                       PC3                           AF0
+
+        CAN alternate function remapping
+CAN signals can be mapped to port A and port B as shown in the table below.
+
+                                      Table 5-14 CAN alternate function remapping
+
+          Alternate function                           Pin                          Remap
+                                                      PA11                           AF1
+              CAN_RX
+                                                       PB8                           AF5
+
+
+                                                     99 / 651
+                                                                                      nsing.com.sg
+
+
+        Alternate function                     Pin                            Remap
+                                               PA12                            AF1
+            CAN_TX
+                                               PB9                             AF5
+
+      USARTx alternate function remapping
+5.2.5.9.1 USART1 alternate function remapping
+                             Table 5-15 USART1 alternate function remapping
+
+        Alternate function                     Pin                            Remap
+          USART1_CTS                           PA11                            AF4
+          USART1_RTS                           PA12                            AF4
+                                               PA4                             AF1
+                                               PA9                             AF4
+          USART1_TX
+                                               PB6                             AF0
+                                               PB8                             AF0
+                                               PA5                             AF4
+          USART1_RX                            PA10                            AF4
+                                               PB7                             AF0
+          USART1_CK                            PA8                             AF4
+
+5.2.5.9.2 USART2 alternate function remapping
+                             Table 5-16 USART2 alternate function remapping
+
+        Alternate function                     Pin                            Remap
+                                               PA0                             AF4
+          USART2_CTS                           PA15                            AF6
+                                               PD3                             AF0
+                                               PA1                             AF4
+          USART2_RTS
+                                               PB3                             AF4
+                                               PA2                             AF4
+          USART2_TX                            PB4                             AF4
+                                               PD14                            AF4
+                                               PA3                             AF4
+          USART2_RX                            PB5                             AF6
+                                               PD15                            AF4
+                                               PA4                             AF4
+          USART2_CK
+                                               PA14                            AF4
+
+5.2.5.9.3 USART3 alternate function remapping
+                             Table 5-17 USART3 alternate function remapping
+
+        Alternate function                     Pin                            Remap
+          USART3_CTS                           PB13                            AF7
+          USART3_RTS                           PB14                            AF7
+
+                                             100 / 651
+                                                                                      nsing.com.sg
+
+
+        Alternate function                      Pin                           Remap
+                                               PB10                            AF0
+          USART3_TX
+                                               PC10                            AF5
+                                               PB11                            AF5
+          USART3_RX
+                                               PC11                            AF5
+                                               PB12                            AF4
+          USART3_CK
+                                               PC12                            AF5
+
+       UARTx alternate function remapping
+5.2.5.10.1 UART4 alternate function remapping
+                             Table 5-18 UART4 alternate function remapping
+
+        Alternate function                      Pin                           Remap
+                                               PB0                             AF6
+                                               PB14                            AF6
+           UART4_TX
+                                               PC10                            AF6
+                                               PD13                            AF6
+                                               PB1                             AF6
+                                               PB15                            AF6
+           UART4_RX
+                                               PC11                            AF6
+                                               PD12                            AF6
+
+5.2.5.10.2 UART5 alternate function remapping
+                             Table 5-19 UART5 alternate function remapping
+
+        Alternate function                      Pin                           Remap
+                                               PB4                             AF6
+           UART5_TX                            PB8                             AF6
+                                               PC12                            AF6
+                                               PB5                             AF7
+           UART5_RX                            PB9                             AF6
+                                               PD2                             AF6
+
+       LPUART alternate function remapping
+                             Table 5-20 LPUART alternate function remapping
+
+        Alternate function                      Pin                           Remap
+         LPUART_CTS                            PA6                             AF4
+                                               PB13                            AF4
+                                               PB1                             AF7
+                                               PB12                            AF2
+         LPUART_RTS
+                                               PB14                            AF4
+                                               PD2                             AF0
+          LPUART_TX                            PA1                             AF6
+
+                                              101 / 651
+                                                                                      nsing.com.sg
+
+
+        Alternate function                      Pin                           Remap
+                                                PA4                            AF6
+                                                PB6                            AF6
+                                               PB10                            AF4
+                                                PC4                            AF2
+                                               PC10                            AF0
+                                                PA0                            AF6
+                                                PA3                            AF6
+                                                PB7                            AF6
+          LPUART_RX
+                                               PB11                            AF4
+                                                PC5                            AF2
+                                               PC11                            AF0
+
+        I2C alternate function remapping
+5.2.5.12.1 I2C1 alternate function remapping
+                               Table 5-21 I2C1 alternate function remapping
+
+        Alternate function                      Pin                           Remap
+                                                PA4                            AF7
+                                               PA15                            AF7
+                                                PB6                            AF1
+            I2C1_SCL                            PB8                            AF4
+                                                PC0                            AF7
+                                                PC4                            AF7
+                                               PD13                            AF7
+                                                PA5                            AF7
+                                               PA14                            AF7
+                                                PB7                            AF1
+           I2C1_SDA                             PB9                            AF4
+                                                PC1                            AF7
+                                                PC5                            AF7
+                                               PD12                            AF7
+          I2C1_SMBA                             PB5                            AF1
+
+
+
+
+                                              102 / 651
+                                                                                      nsing.com.sg
+
+
+5.2.5.12.2 I2C2 alternate function remapping
+                               Table 5-22 I2C2 alternate function remapping
+
+        Alternate function                      Pin                           Remap
+                                                PA3                            AF5
+                                                PA9                            AF6
+            I2C2_SCL                           PB10                            AF6
+                                               PB13                            AF5
+                                               PD15                            AF6
+                                                PA2                            AF5
+                                                PA8                            AF6
+                                               PA10                            AF6
+           I2C2_SDA
+                                               PB11                            AF6
+                                               PB14                            AF5
+                                               PD14                            AF6
+           I2C2_SMBA                            PA8                            AF1
+                                               PB12                            AF8
+
+        SPI/I2S alternate function remapping
+5.2.5.13.1 SPI1 alternate function remapping
+                               Table 5-23 SPI1 alternate function remapping
+
+        Alternate function                      Pin                           Remap
+                                                PA4                            AF0
+                                                PA8                            AF5
+        SPI1_I2S1_NSS_WS
+                                                PB6                            AF4
+                                                PD7                            AF6
+                                                PA5                            AF0
+                                               PA10                            AF0
+       SPI1_I2S1_SCLK_CK
+                                                PB3                            AF1
+                                                PD4                            AF5
+                                                PA0                            AF0
+                                                PA6                            AF0
+      SPI1_I2S1_MISO_MCK
+                                                PB4                            AF1
+                                                PD5                            AF5
+                                                PA7                            AF0
+       SPI1_I2S1_MOSI_SD                        PB5                            AF0
+                                                PD6                            AF5
+
+
+
+
+                                              103 / 651
+                                                                                         nsing.com.sg
+
+
+5.2.5.13.2 SPI2/I2S2 alternate function remapping
+                             Table 5-24 SPI2/I2S2 alternate function remapping
+
+        Alternate function                       Pin                             Remap
+                                                PA13                              AF5
+                                                PA15                              AF1
+        SPI2_I2S2_NSS_WS
+                                                PB12                              AF0
+                                                PC6                               AF5
+                                                PA10                              AF5
+                                                PB6                               AF5
+       SPI2_I2S2_SCLK_CK                        PB13                              AF0
+                                                PC7                               AF5
+                                                PD12                              AF5
+                                                PA11                              AF0
+      SPI2_I2S2_MISO_MCK                        PB14                              AF0
+                                                PC8                               AF5
+                                                PA12                              AF0
+       SPI2_I2S2_MOSI_SD                        PB15                              AF0
+                                                PC9                               AF5
+
+        COMP alternate function remapping
+5.2.5.14.1 COMP1 alternate function remapping
+                              Table 5-25 COMP1 alternate function remapping
+
+        Alternate function                       Pin                             Remap
+                                                PA0                               AF8
+                                                PA11                              AF7
+          COMP1_OUT
+                                                PB6                               AF9
+                                                PB8                               AF7
+
+5.2.5.14.2 COMP2 alternate function remapping
+                              Table 5-26 COMP2 alternate function remapping
+
+        Alternate function                       Pin                             Remap
+                                                PA2                               AF7
+                                                PA6                               AF7
+                                                PA7                               AF7
+          COMP2_OUT
+                                                PA12                              AF7
+                                                PA14                              AF8
+                                                PB9                               AF7
+
+
+
+
+                                               104 / 651
+                                                                                nsing.com.sg
+
+
+EVENTOUT alternate function remapping
+                     Table 5-27 EVENTOUT alternate function remapping
+
+Alternate function                       Pin                            Remap
+                                     PA0~PA13                            AF3
+                                        PA15                             AF3
+                                      PB0~PB15                           AF3
+  EVENTOUT                            PC0~PC7                            AF3
+                                      PC9~PC13                           AF3
+                                         PD2                             AF3
+                                     PD12~PD13                           AF3
+
+RTC alternate function remapping
+                        Table 5-28 RTC alternate function remapping
+
+Alternate function                       Pin                            Remap
+  RTC_REFIN                             PB15                             AF9
+
+LCD alternate function remapping
+                        Table 5-29 LCD alternate function remapping
+
+Alternate function                       Pin                            Remap
+     COM0                                PA8                            AF10
+     COM1                                PA9                            AF10
+     COM2                               PA10                            AF10
+                                        PA15                            AF11
+     COM3
+                                         PB9                            AF10
+                                        PD4(1)                          AF10
+    COM4(1)
+                                       PC10(1)                          AF10
+                                        PD5(1)                          AF10
+    COM5(1)
+                                       PC11(1)                          AF10
+                                        PD6(1)                          AF10
+    COM6(1)
+                                       PC12(1)                          AF10
+                                        PD7(1)                          AF10
+    COM7(1)
+                                        PD2(1)                          AF10
+  SEG0~SEG2                           PA1~PA3                           AF10
+  SEG3~SEG4                           PA6~PA7                           AF10
+  SEG5~SEG6                           PB0~PB1                           AF10
+  SEG7~SEG9                           PB3~PB5                           AF10
+ SEG10~SEG15                         PB10~PB15                          AF10
+     SEG16                               PB8                            AF10
+     SEG17                              PA15                            AF10
+ SEG18~SEG27                          PC0~PC9                           AF10
+ SEG28~SEG30(1)                     PC10~PC12(1)                        AF10
+
+                                       105 / 651
+                                                                                                               nsing.com.sg
+
+
+          Alternate function                             Pin                                     Remap
+                                                     PD4~PD6(1)                                   AF10
+                                                        PD2(1)                                    AF10
+               SEG31(1)
+                                                        PD7(1)                                    AF10
+            SEG32~SEG33                               PD0~PD1                                     AF10
+                SEG34                                    PD3                                      AF10
+                SEG35                                   PC13                                      AF10
+            SEG36~SEG39                              PD8~PD11                                     AF10
+                                                     PD4~PD6(1)                                   AF10
+           SEG40~SEG42(1)
+                                                    PC10~PC12(1)                                  AF10
+                                                        PD7(1)                                    AF10
+               SEG43(1)
+                                                        PD2(1)                                    AF10
+
+1. Due to the difference of the chip version, the corresponding pins of COM4~COM7, SEG28~SEG31,
+SEG40~SEG43 are different. It can be judged according to the second character of the 8-bit code in the last line of
+the chip silk screen:
+
+                                      Table 5-30 LCD pin mapping function distinction
+
+              Pin name                                Version B                           Version C/Version D
+                COM4                                     PD4                                      PC10
+                COM5                                     PD5                                      PC11
+                COM6                                     PD6                                      PC12
+                COM7                                     PD7                                      PD2
+                SEG28                                   PC10                                      PD4
+                SEG29                                   PC11                                      PD5
+                SEG30                                   PC12                                      PD6
+                SEG31                                    PD2                                      PD7
+                SEG40                                    PD4                                      PC10
+                SEG41                                    PD5                                      PC11
+                SEG42                                    PD6                                      PC12
+                SEG43                                    PD7                                      PD2
+
+
+       I/O configuration of peripherals
+                                                   Table 5-31 ADC/DAC
+
+                        ADC/DAC pin                                             GPIO configuration
+                            ADC                                                    Analog mode
+                            DAC                                                    Analog mode
+
+                                                  Table 5-32 TIM1/TIM8
+
+            TIM1/TIM8 pin                           configuration                       PAD configuration mode
+                                                Input capture channel x                       Input floating
+             TIM1/8_CHx
+                                                   Output channel x                     Push-pull alternate output
+
+                                                       106 / 651
+                                                                                                nsing.com.sg
+
+
+ TIM1/TIM8 pin                     configuration                         PAD configuration mode
+ TIM1/8_CHxN              Complementary output channel x                Push-pull alternate output
+ TIM1/8_BKIN                        Brake input                                Input floating
+  TIM1/8_ETR                External trigger clock input                       Input floating
+
+                                Table 5-33 TIM2/3/4/5/9
+
+TIM2/3/4/5/9 pin                   configuration                         PAD configuration mode
+                              Input capture channel x                          Input floating
+TIM2/3/4/5/9_CHx
+                                 Output channel x                       Push-pull alternate output
+TIM2/3/4/5/9_ETR            External trigger clock input                       Input floating
+
+                                  Table 5-34 LPTIM
+
+              LPTIM pin                                      PAD configuration mode
+            LPTIM_INx                                              Input floating
+           LPTIM_OUT                                         Push-pull alternate output
+            LPTIM_ETR                                              Input floating
+
+                                    Table 5-35 CAN
+
+               CAN pin                                          GPIO configuration
+               CAN_TX                                        Push-pull alternate output
+               CAN_RX                                      Input floating or input pull-up
+
+                                  Table 5-36 USART
+
+   USART pin                       configuration                           GPIO configuration
+                             full duplex transmissions                  Push-pull alternate output
+  USARTx_TX
+                          Half duplex synchronous mode             Push-pull alternate output + pull-up
+                             full duplex transmissions                         Input pull-up
+  USARTx_RX
+                          Half duplex synchronous mode             Unused, can be used as general I/O.
+  USARTx_CK                     Synchronous mode                        Push-pull alternate output
+ USARTx_RTS                   Hardware flow control                     Push-pull alternate output
+ USARTx_CTS                   Hardware flow control                   Input floating or input pull-up
+
+                                   Table 5-37 UART
+
+   USAR pin                        configuration                           GPIO configuration
+                             full duplex transmissions                  Push-pull alternate output
+  UARTx_TX
+                          Half duplex synchronous mode             Push-pull alternate output + pull-up
+                             full duplex transmissions                         Input pull-up
+  UARTx_RX
+                          Half duplex synchronous mode             Unused, can be used as general I/O.
+
+                                 Table 5-38 LPUART
+
+ LPUSART pin                       configuration                           GPIO configuration
+  LPUART_TX                       Digital output                        Push-pull alternate output
+  LPUART_RX                        Digital input                        Push-pull alternate output
+
+
+                                     107 / 651
+                                                                                           nsing.com.sg
+
+
+   LPUSART pin                  configuration                            GPIO configuration
+   LPUART _CTS              Hardware flow control                   Input floating or input pull-up
+   LPUART _RTS              Hardware flow control                     Push-pull alternate output
+
+                                  Table 5-39 I2C
+
+      I2C pin                   configuration                            GPIO configuration
+     I2Cx_SCL                     I2C clock                           Open-drain alternate output
+     I2Cx_SDA                     I2C data                            Open-drain alternate output
+    I2Cx_SMBA                    SMBA data                            Push-pull alternate output
+
+                                Table 5-40 SPI-I2S
+
+    SPI-I2S pin                 configuration                            GPIO configuration
+                                Master mode                           Push-pull alternate output
+SPIx_I2Sx_MOSI_SD                                               Input floating or input pull-up or push-
+                                 Slave mode
+                                                                         pull alternate output
+                                                                Input floating or input pull-up or push-
+                                Master mode
+SPIx_I2Sx_MISO_MCK                                                       pull alternate output
+                                 Slave mode                           Push-pull alternate output
+                                Master mode                           Push-pull alternate output
+ SPIx_I2Sx_NSS_WS
+                                 Slave mode                           Push-pull alternate output
+                                Master mode                           Push-pull alternate output
+ SPIx_I2Sx_SCK_CK
+                                 Slave mode                           Push-pull alternate output
+
+                                 Table 5-41 USB
+
+                  USB pin                                     GPIO configuration
+                  USB_DM                 Once the USB module is enabled, these pins are automatically
+                  USB_DP                            connected to the internal USB transceiver
+
+                             Table 5-42 JTAG/SWD
+
+   JTAG/SWD pin                 configuration                            GPIO configuration
+   JTMS/SWDIO                   Input pull-up                     Push-pull alternate output + pull-up
+   JTCK/SWCLK                 Pull-down output                    Push-pull alternate output + pull-up
+       JTDI                     Input pull-up                     Push-pull alternate output + pull-up
+      JTDO                         Output                             Push-pull alternate output
+     NJTRST                     Input pull-up                     Push-pull alternate output + pull-up
+
+                                Table 5-43 Other
+
+        pin                   Alternate function                         GPIO configuration
+   EVENT_OUT                    EVENT OUT                             Push-pull alternate output
+   COMPx_OUT                       COMP                               Push-pull alternate output
+      MCO                       clock output                          Push-pull alternate output
+    LCD_COMx                LCD common output                                Analog mode
+    LCD_SEGx                LCD segment output                               Analog mode
+
+                                  108 / 651
+                                                                                                                                                                                                                                                                                                                                                                                 nsing.com.sg
+
+
+                               pin                                                                                                                               Alternate function                                                                                                                                 GPIO configuration
