@@ -125,6 +125,15 @@ bus! {
     Afio => (APB2, 0),
 }
 
+// N32L40x: SPI2 clock-enable lives on APB2 bit 19 (verified against PAC
+// rcc::apb2pclken SPI2 field). The G4-family bus! blocks below are cfg-gated
+// to n32g4* parts and do not cover n32l403/n32l406, so SPI2 had no
+// rcc::Enable/Reset impl for this device until now.
+#[cfg(any(feature = "n32l403", feature = "n32l406"))]
+bus! {
+    Spi2 => (APB2, 19),
+}
+
 
 #[cfg(any(feature = "n32g452",feature = "n32g455",feature = "n32g457",feature = "n32g4fr"))]
 bus! {

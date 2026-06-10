@@ -3,7 +3,6 @@ use core::ops::{Deref, DerefMut};
 use core::sync::atomic::Ordering;
 use core::sync::atomic;
 use crate::dma::*;
-use crate::gpio::alt::altmap::Remap;
 use crate::gpio::{self, NoPin};
 use crate::pac;
 use embedded_dma::WriteBuffer;
@@ -225,14 +224,12 @@ macro_rules! spi {
 
 spi! { pac::Spi1: Spi1, SpiSlave1 }
 spi! { pac::Spi2: Spi2, SpiSlave2 }
-spi! { pac::Spi3: Spi3, SpiSlave3 }
 
 
 pub trait SpiExt: Sized + Instance {
-    fn spi<RMP : Remap,
-    SCK: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Sck>,
-    MISO: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Miso>,
-    MOSI: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Mosi>>(
+    fn spi<SCK: Into<Self::Sck>,
+    MISO: Into<Self::Miso>,
+    MOSI: Into<Self::Mosi>>(
         self,
         pins: (SCK,MISO,MOSI),
         mode: impl Into<Mode>,
@@ -241,9 +238,8 @@ pub trait SpiExt: Sized + Instance {
         afio: &mut pac::Afio,
     ) -> Spi<Self, {TransferMode::TransferModeNormal}, u8>;
 
-    fn spi_bidi<RMP : Remap,
-    SCK: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Sck>,
-    MOSI: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Mosi>>(
+    fn spi_bidi<SCK: Into<Self::Sck>,
+    MOSI: Into<Self::Mosi>>(
         self,
         pins: (SCK,MOSI),
         mode: impl Into<Mode>,
@@ -254,9 +250,8 @@ pub trait SpiExt: Sized + Instance {
     where
         NoPin: Into<Self::Miso>;
 
-    fn spi_rxonly<RMP : Remap,
-    SCK: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Sck>,
-    MISO: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Miso>>(
+    fn spi_rxonly<SCK: Into<Self::Sck>,
+    MISO: Into<Self::Miso>>(
         self,
         pins: (SCK,MISO),
         mode: impl Into<Mode>,
@@ -267,11 +262,10 @@ pub trait SpiExt: Sized + Instance {
     where
         NoPin: Into<Self::Mosi>;
 
-    fn spi_slave<RMP : Remap,
-    SCK: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Sck>,
-    MISO: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Miso>,
-    MOSI: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Mosi>,
-    NSS: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Nss>>(
+    fn spi_slave<SCK: Into<Self::Sck>,
+    MISO: Into<Self::Miso>,
+    MOSI: Into<Self::Mosi>,
+    NSS: Into<Self::Nss>>(
         self,
         pins: (
             SCK,
@@ -301,9 +295,9 @@ impl<SPI: Instance> SpiExt for SPI {
     /// # Note
     /// Depending on `freq` you may need to set GPIO speed for `pins` (the `Speed::Low` is default for GPIO) before create `Spi` instance.
     /// Otherwise it may lead to the 'wrong last bit in every received byte' problem.
-    fn spi<RMP : Remap,SCK: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Sck>,
-    MISO: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Miso>,
-    MOSI: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Mosi>>(
+    fn spi<SCK: Into<Self::Sck>,
+    MISO: Into<Self::Miso>,
+    MOSI: Into<Self::Mosi>>(
         self,
         pins: (SCK,MISO,MOSI),
         mode: impl Into<Mode>,
@@ -311,7 +305,6 @@ impl<SPI: Instance> SpiExt for SPI {
         clocks: &Clocks,
         afio: &mut pac::Afio,
     ) -> Spi<Self, {TransferMode::TransferModeNormal}, u8> {
-        RMP::remap(afio);
         Spi::new(self, pins, mode, freq, clocks)
     }
     /// Enables the SPI clock, resets the peripheral, sets `Alternate` mode for `pins` and initialize the peripheral as SPI Master XFER_MODE mode.
@@ -319,9 +312,8 @@ impl<SPI: Instance> SpiExt for SPI {
     /// # Note
     /// Depending on `freq` you may need to set GPIO speed for `pins` (the `Speed::Low` is default for GPIO) before create `Spi` instance.
     /// Otherwise it may lead to the 'wrong last bit in every received byte' problem.
-    fn spi_bidi<RMP : Remap,
-    SCK: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Sck>,
-    MOSI: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Mosi>>(
+    fn spi_bidi<SCK: Into<Self::Sck>,
+    MOSI: Into<Self::Mosi>>(
         self,
         pins: (SCK,MOSI),
         mode: impl Into<Mode>,
@@ -332,7 +324,6 @@ impl<SPI: Instance> SpiExt for SPI {
     where
         NoPin: Into<Self::Miso>,
     {
-        RMP::remap(afio);
         Spi::new_bidi(self, pins, mode, freq, clocks)
     }
 
@@ -341,9 +332,8 @@ impl<SPI: Instance> SpiExt for SPI {
     /// # Note
     /// Depending on `freq` you may need to set GPIO speed for `pins` (the `Speed::Low` is default for GPIO) before create `Spi` instance.
     /// Otherwise it may lead to the 'wrong last bit in every received byte' problem.
-    fn spi_rxonly<RMP : Remap,
-    SCK: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Sck>,
-    MISO: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Miso>>(
+    fn spi_rxonly<SCK: Into<Self::Sck>,
+    MISO: Into<Self::Miso>>(
         self,
         pins: (SCK,MISO),
         mode: impl Into<Mode>,
@@ -355,7 +345,6 @@ impl<SPI: Instance> SpiExt for SPI {
     where
         NoPin: Into<Self::Mosi>,
     {
-        RMP::remap(afio);
         Spi::new_rxonly(self, pins, mode, freq, clocks)
     }
     /// Enables the SPI clock, resets the peripheral, sets `Alternate` mode for `pins` and initialize the peripheral as SPI Slave Normal mode.
@@ -363,11 +352,10 @@ impl<SPI: Instance> SpiExt for SPI {
     /// # Note
     /// Depending on `freq` you may need to set GPIO speed for `pins` (the `Speed::Low` is default for GPIO) before create `Spi` instance.
     /// Otherwise it may lead to the 'wrong last bit in every received byte' problem.
-    fn spi_slave<RMP : Remap,
-        SCK: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Sck>,
-        MISO: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Miso>,
-        MOSI: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Mosi>,
-        NSS: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Nss>>(
+    fn spi_slave<SCK: Into<Self::Sck>,
+        MISO: Into<Self::Miso>,
+        MOSI: Into<Self::Mosi>,
+        NSS: Into<Self::Nss>>(
             self,
             pins: (
                 SCK,
@@ -502,10 +490,9 @@ impl<SPI: Instance> Spi<SPI, {TransferMode::TransferModeNormal}, u8> {
     /// # Note
     /// Depending on `freq` you may need to set GPIO speed for `pins` (the `Speed::Low` is default for GPIO) before create `Spi` instance.
     /// Otherwise it may lead to the 'wrong last bit in every received byte' problem.
-    pub fn new<RMP : Remap,
-    SCK: crate::gpio::alt::altmap::RemapIO<SPI,RMP> + Into<SPI::Sck>,
-    MISO: crate::gpio::alt::altmap::RemapIO<SPI,RMP> + Into<SPI::Miso>,
-    MOSI: crate::gpio::alt::altmap::RemapIO<SPI,RMP> + Into<SPI::Mosi>>(
+    pub fn new<SCK: Into<SPI::Sck>,
+    MISO: Into<SPI::Miso>,
+    MOSI: Into<SPI::Mosi>>(
         spi: SPI,
         pins: (SCK,MISO,MOSI),
         mode: impl Into<Mode>,
@@ -590,11 +577,10 @@ impl<SPI: Instance> SpiSlave<SPI, {TransferMode::TransferModeNormal}, u8> {
     /// # Note
     /// Depending on `freq` you may need to set GPIO speed for `pins` (the `Speed::Low` is default for GPIO) before create `Spi` instance.
     /// Otherwise it may lead to the 'wrong last bit in every received byte' problem.
-    pub fn new<RMP : Remap,
-    SCK: crate::gpio::alt::altmap::RemapIO<SPI,RMP> + Into<SPI::Sck>,
-    MISO: crate::gpio::alt::altmap::RemapIO<SPI,RMP> + Into<SPI::Miso>,
-    MOSI: crate::gpio::alt::altmap::RemapIO<SPI,RMP> + Into<SPI::Mosi>,
-    NSS: crate::gpio::alt::altmap::RemapIO<SPI,RMP> + Into<SPI::Nss>>(
+    pub fn new<SCK: Into<SPI::Sck>,
+    MISO: Into<SPI::Miso>,
+    MOSI: Into<SPI::Mosi>,
+    NSS: Into<SPI::Nss>>(
         spi: SPI,
         pins: (
             SCK,
@@ -692,7 +678,7 @@ impl<SPI: Instance, const XFER_MODE : TransferMode, W> Spi<SPI, XFER_MODE, W> {
     /// Pre initializing the SPI bus.
     fn pre_init(self, mode: Mode, freq: Hertz, clock: Hertz) -> Self {
         // disable SS output
-        self.spi.ctrl2().modify(|_,w| w.ssoen().clear_bit());
+        self.spi.ctrl2().modify(|_,w| w.ssoen_().clear_bit());
 
         let br = match clock.raw() / freq.raw() {
             0 => unreachable!(),
@@ -710,10 +696,10 @@ impl<SPI: Instance, const XFER_MODE : TransferMode, W> Spi<SPI, XFER_MODE, W> {
             w.clkpha().bit(mode.phase == Phase::CaptureOnSecondTransition);
             w.clkpol().bit(mode.polarity == Polarity::IdleHigh);
             // mstr: master configuration
-            w.msel().set_bit();
+            w.msel_().set_bit();
             unsafe { w.br().bits(br) };
             // lsbfirst: MSB first
-            w.lsbff().clear_bit();
+            w.lsbff_().clear_bit();
             // ssm: enable software slave management (NSS pin free for other uses)
             w.ssmen().set_bit();
             // ssi: set nss high
@@ -734,10 +720,10 @@ impl<SPI: Instance, const XFER_MODE : TransferMode, W> SpiSlave<SPI, XFER_MODE, 
             w.clkpha().bit(mode.phase == Phase::CaptureOnSecondTransition);
             w.clkpol().bit(mode.polarity == Polarity::IdleHigh);
             // mstr: slave configuration
-            w.msel().clear_bit();
+            w.msel_().clear_bit();
             unsafe { w.br().bits(0) };
             // lsbfirst: MSB first
-            w.lsbff().clear_bit();
+            w.lsbff_().clear_bit();
             // ssm: enable software slave management (NSS pin free for other uses)
             w.ssmen().bit(self.pins.3.is_none());
             // ssi: set nss high = master mode
@@ -774,7 +760,7 @@ impl<SPI: Instance> Inner<SPI> {
     pub fn bit_format(&mut self, format: BitFormat) {
         self.spi
             .ctrl1()
-            .modify(|_, w| w.lsbff().bit(format == BitFormat::LsbFirst));
+            .modify(|_, w| w.lsbff_().bit(format == BitFormat::LsbFirst));
     }
 
     /// Return `true` if the TXE flag is set, i.e. new data to transmit
@@ -801,7 +787,7 @@ impl<SPI: Instance> Inner<SPI> {
     /// Returns true if the transfer is in progress
     #[inline]
     pub fn is_busy(&self) -> bool {
-        self.spi.sts().read().busy().bit_is_set()
+        self.spi.sts().read().busy_().bit_is_set()
     }
 
     /// Return `true` if the OVR flag is set, i.e. new data has been received
@@ -912,7 +898,7 @@ impl<SPI: Instance> crate::ClearFlags for Inner<SPI> {
         if flags.into().contains(CFlag::CrcError) {
             self.spi
                 .sts()
-                .write(|w| unsafe { w.bits(0xffff).crcerr().clear_bit() })
+                .write(|w| unsafe { w.bits(0xffff).crcerr().clear_bit() });
         }
     }
 }
@@ -1471,10 +1457,4 @@ spi_dma!(
     Spi2RxDma,
     Spi2TxDma,
     Spi2RxTxDma
-);
-spi_dma!(
-    pac::Spi3,
-    Spi3RxDma,
-    Spi3TxDma,
-    Spi3RxTxDma
 );
