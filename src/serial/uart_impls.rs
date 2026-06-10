@@ -7,7 +7,7 @@ use super::{
     config, CFlag, Error, Event, Flag, Rx, RxISR, RxListen, Serial, SerialExt, Tx, TxISR, TxListen,
 };
 use crate::gpio::Floating;
-use crate::gpio::{alt::altmap::Remap, Input};
+use crate::gpio::Input;
 use crate::gpio::{alt::SerialAsync as CommonPins, NoPin, PushPull};
 use crate::rcc::{self, Clocks};
 
@@ -437,17 +437,16 @@ where
 }
 
 impl<UART: Instance> SerialExt for UART {
-    fn serial<WORD,RMP : Remap,TX: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Tx<PushPull>>,RX : crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Rx<Floating>>>(
+    fn serial<WORD,TX: Into<Self::Tx<PushPull>>,RX: Into<Self::Rx<Floating>>>(
         self,
         pins: (TX,RX),
         config: impl Into<config::Config>,
         clocks: &Clocks,
         afio: &mut crate::pac::Afio
     ) -> Result<Serial<Self, WORD>, config::InvalidConfig> {
-        RMP::remap(afio);
         Serial::new(self, (pins.0.into(),pins.1.into()), config, clocks,afio)
     }
-    fn tx<WORD,RMP : Remap,TX: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Tx<PushPull>>>(
+    fn tx<WORD,TX: Into<Self::Tx<PushPull>>>(
         self,
         tx_pin: TX,
         config: impl Into<config::Config>,
@@ -457,10 +456,9 @@ impl<UART: Instance> SerialExt for UART {
     where
         NoPin<Input>: Into<Self::Rx<Floating>>,
     {
-        RMP::remap(afio);
         Serial::tx(self, tx_pin, config, clocks,afio)
     }
-    fn rx<WORD,RMP : Remap,RX: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Rx<Floating>>>(
+    fn rx<WORD,RX: Into<Self::Rx<Floating>>>(
         self,
         rx_pin: RX,
         config: impl Into<config::Config>,
@@ -470,7 +468,6 @@ impl<UART: Instance> SerialExt for UART {
     where
         NoPin<PushPull>: Into<Self::Tx<PushPull>>,
     {
-        RMP::remap(afio);
         Serial::rx(self, rx_pin, config, clocks,afio)
     }
 }

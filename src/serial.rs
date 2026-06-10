@@ -23,7 +23,6 @@ pub(crate) mod uart_impls;
 pub use uart_impls::Instance;
 use uart_impls::RegisterBlockImpl;
 
-use crate::gpio::alt::altmap::Remap;
 use crate::gpio::{self, Floating, Input, PushPull};
 
 use crate::pac;
@@ -194,7 +193,7 @@ pub struct Tx<USART: CommonPins, WORD = u8> {
 }
 
 pub trait SerialExt: Sized + Instance {
-    fn serial<WORD,RMP : Remap,TX: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Tx<PushPull>>,RX : crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Rx<Floating>>>(
+    fn serial<WORD,TX: Into<Self::Tx<PushPull>>,RX: Into<Self::Rx<Floating>>>(
         self,
         pins: (TX,RX),
         config: impl Into<config::Config>,
@@ -202,7 +201,7 @@ pub trait SerialExt: Sized + Instance {
         afio: &mut crate::pac::Afio,
     ) -> Result<Serial<Self, WORD>, config::InvalidConfig>;
 
-    fn tx<WORD,RMP : Remap,TX: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Tx<PushPull>>>(
+    fn tx<WORD,TX: Into<Self::Tx<PushPull>>>(
         self,
         tx_pin: TX,
         config: impl Into<config::Config>,
@@ -211,7 +210,7 @@ pub trait SerialExt: Sized + Instance {
     ) -> Result<Tx<Self, WORD>, config::InvalidConfig>
     where NoPin<Input>: Into<Self::Rx<Floating>>;
 
-    fn rx<WORD,RMP : Remap,RX: crate::gpio::alt::altmap::RemapIO<Self,RMP> + Into<Self::Rx<Floating>>>(
+    fn rx<WORD,RX: Into<Self::Rx<Floating>>>(
         self,
         rx_pin: RX,
         config: impl Into<config::Config>,
