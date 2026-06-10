@@ -63,11 +63,9 @@ struct Unknown;
 
 impl crate::Sealed for Unknown {}
 impl PinMode for Unknown {
-    const CNF: u32 = 0;
-
-    const MODE: u32 = 0;
-
-    const PULL: Option<bool> = None;
+    // Placeholder type-state used only to simplify conversions; never written
+    // to hardware. Map to the input/reset PMODE; other fields take defaults.
+    const PMODE: u32 = 0b00;
 }
 
 impl<const P: char, const N: u8> DynamicPin<P, N> {
