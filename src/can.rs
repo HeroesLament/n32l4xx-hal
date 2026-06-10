@@ -1,74 +1,21 @@
 //! # Controller Area Network (CAN) Interface
 //!
-//! ## Alternate function remapping
-//!
 //! TX: Alternate Push-Pull Output
-//! RX: Input
+//! RX: Alternate (input direction selected internally)
 //!
-//! ### CAN1
+//! The N32L40x has a single CAN controller (`pac::Can`). Pin options come
+//! from the verified GPIO AF table (see `tools/gpio_af/af_table_um.tsv`):
 //!
-//! | Function | NoRemap | Remap |
-//! |----------|---------|-------|
-//! | TX       | PA12    | PB9   |
-//! | RX       | PA11    | PB8   |
+//! | Function | Option A | Option B |
+//! |----------|----------|----------|
+//! | TX       | PA12 (AF1) | PB9 (AF5) |
+//! | RX       | PA11 (AF1) | PB8 (AF5) |
 //!
-//! ### CAN2
-//!
-//! | Function | NoRemap | Remap |
-//! |----------|---------|-------|
-//! | TX       | PB6     | PB13  |
-//! | RX       | PB5     | PB12  |
+//! Pins are selected by their alternate function (the STM32-F4/L4 model);
+//! there is no AFIO remap mux on this family.
 
-use crate::gpio::{self, Alternate, Input};
-use crate::pac::{self, Rcc,Afio};
-
-pub trait Pins: crate::Sealed {
-    type Instance;
-    fn remap(afio: &mut Afio);
-}
-
-impl<INMODE, OUTMODE> crate::Sealed
-    for (gpio::PA12<Alternate<OUTMODE>>, gpio::PA11<Input<INMODE>>)
-{
-}
-impl<INMODE, OUTMODE> Pins for (gpio::PA12<Alternate<OUTMODE>>, gpio::PA11<Input<INMODE>>) {
-    type Instance = pac::Can1;
-
-    fn remap(afio: &mut Afio) {
-        afio.rmp_cfg().modify(|_, w| unsafe { w.can1_rmp().bits(0) });
-    }
-}
-
-impl<INMODE, OUTMODE> crate::Sealed for (gpio::PB9<Alternate<OUTMODE>>, gpio::PB8<Input<INMODE>>) {}
-impl<INMODE, OUTMODE> Pins for (gpio::PB9<Alternate<OUTMODE>>, gpio::PB8<Input<INMODE>>) {
-    type Instance = pac::Can1;
-
-    fn remap(afio: &mut Afio) {
-        afio.rmp_cfg().modify(|_, w| unsafe { w.can1_rmp().bits(0b10) });
-    }
-}
-
-impl<INMODE, OUTMODE> crate::Sealed
-    for (gpio::PB13<Alternate<OUTMODE>>, gpio::PB12<Input<INMODE>>)
-{
-}
-
-impl<INMODE, OUTMODE> Pins for (gpio::PB13<Alternate<OUTMODE>>, gpio::PB12<Input<INMODE>>) {
-    type Instance = pac::Can2;
-
-    fn remap(afio: &mut Afio) {
-        afio.rmp_cfg3().modify(|_, w| unsafe { w.can2_rmp().bits(0) });
-    }
-}
-
-impl<INMODE, OUTMODE> crate::Sealed for (gpio::PB6<Alternate<OUTMODE>>, gpio::PB5<Input<INMODE>>) {}
-impl<INMODE, OUTMODE> Pins for (gpio::PB6<Alternate<OUTMODE>>, gpio::PB5<Input<INMODE>>) {
-    type Instance = pac::Can2;
-
-    fn remap(afio: &mut Afio) {
-        afio.rmp_cfg3().modify(|_, w| unsafe { w.can2_rmp().bits(0b01) });
-    }
-}
+use crate::gpio::alt::CanCommon;
+use crate::pac::{self, Rcc};
 
 /// Interface to the CAN peripheral.
 pub struct Can<Instance> {
@@ -77,36 +24,34 @@ pub struct Can<Instance> {
 
 impl<Instance> Can<Instance>
 where
-    Instance: crate::rcc::Enable,
+    Instance: crate::rcc::Enable + CanCommon,
 {
-     pub fn new(can: Instance) -> Can<Instance> {
+    pub fn new(can: Instance) -> Can<Instance> {
         let rcc = unsafe { &(*Rcc::ptr()) };
         Instance::enable(rcc);
 
         Can { _peripheral: can }
     }
 
-    /// Routes CAN TX signals and RX signals to pins.
-    pub fn assign_pins<P>(&self, _pins: P, afio: &mut Afio)
+    /// Routes CAN TX and RX signals to the given pins.
+    ///
+    /// The pins must be configured for the CAN alternate function; this is
+    /// enforced by the `Into` bounds against the peripheral's `Rx`/`Tx`
+    /// pin types from the GPIO altmap.
+    pub fn assign_pins<RX, TX>(&self, _pins: (RX, TX))
     where
-        P: Pins<Instance = Instance>,
+        RX: Into<Instance::Rx>,
+        TX: Into<Instance::Tx>,
     {
-        P::remap(afio);
+        let _rx: Instance::Rx = _pins.0.into();
+        let _tx: Instance::Tx = _pins.1.into();
     }
 }
 
-unsafe impl bxcan::Instance for Can<pac::Can1> {
-    const REGISTERS: *mut bxcan::RegisterBlock = pac::Can1::ptr() as *mut bxcan::RegisterBlock;
+unsafe impl bxcan::Instance for Can<pac::Can> {
+    const REGISTERS: *mut bxcan::RegisterBlock = pac::Can::ptr() as *mut bxcan::RegisterBlock;
 }
 
-unsafe impl bxcan::Instance for Can<pac::Can2> {
-    const REGISTERS: *mut bxcan::RegisterBlock = pac::Can2::ptr() as *mut bxcan::RegisterBlock;
-}
-
-unsafe impl bxcan::FilterOwner for Can<pac::Can1> {
-    const NUM_FILTER_BANKS: u8 = 14;
-}
-
-unsafe impl bxcan::FilterOwner for Can<pac::Can2> {
+unsafe impl bxcan::FilterOwner for Can<pac::Can> {
     const NUM_FILTER_BANKS: u8 = 14;
 }
