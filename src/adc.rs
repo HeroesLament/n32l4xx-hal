@@ -84,7 +84,7 @@
 //!
 //!  let config = AdcConfig::default()
 //!      //Set the trigger you want
-//!      .external_trigger(TriggerMode::RisingEdge, ExternalTrigger::Tim_1_cc_1);
+//!      .external_trigger(TriggerMode::RisingEdge, RegularTrigger::Tim1cc1);
 //!  let mut adc = Adc::adc1(device.ADC1, true, config);
 //!  let pa0 = gpioa.pa0.into_analog();
 //!  adc.configure_channel(&pa0, Sequence::One, SampleTime::Cycles_112);
@@ -326,45 +326,26 @@ pub mod config {
         }
     }
 
-    /// Possible external triggers the ADC can listen to
-    #[cfg_attr(feature = "defmt", derive(defmt::Format))]
-    #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-    #[repr(u8)]
-    pub enum ExternalTrigger {
-        /// TIM1 compare channel 1
-        Tim_1_cc_1 = 0b0000,
-        /// TIM1 compare channel 2
-        Tim_1_cc_2 = 0b0001,
-        /// TIM1 compare channel 3
-        Tim_1_cc_3 = 0b0010,
-        /// TIM2 compare channel 2
-        Tim_2_cc_2 = 0b0011,
-        /// TIM2 compare channel 3
-        Tim_2_cc_3 = 0b0100,
-        /// TIM2 compare channel 4
-        Tim_2_cc_4 = 0b0101,
-        /// TIM2 trigger out
-        Tim_2_trgo = 0b0110,
-        /// TIM3 compare channel 1
-        Tim_3_cc_1 = 0b0111,
-        /// TIM3 trigger out
-        Tim_3_trgo = 0b1000,
-        /// TIM4 compare channel 4
-        Tim_4_cc_4 = 0b1001,
-        /// TIM5 compare channel 1
-        Tim_5_cc_1 = 0b1010,
-        /// TIM5 compare channel 2
-        Tim_5_cc_2 = 0b1011,
-        /// TIM5 compare channel 3
-        Tim_5_cc_3 = 0b1100,
-        /// External interrupt line 11
-        Exti_11 = 0b1111,
-    }
-    impl From<ExternalTrigger> for u8 {
-        fn from(et: ExternalTrigger) -> u8 {
-            et as _
-        }
-    }
+    // External trigger source selection.
+    //
+    // The N32L40x has TWO DISTINCT trigger-source maps: the regular sequence
+    // (EXTRSEL, CTRL2[19:17], UM Table 17-5) and the injected sequence
+    // (EXTJSEL, CTRL2[14:12], UM Table 17-6). The SAME 3-bit code selects a
+    // DIFFERENT timer event in each table (e.g. code 0 = TIM1_CC1 for regular
+    // but TIM1_TRGO for injected), so they CANNOT share one enum. These are
+    // re-exports of the svd2rust-generated, UM-verified PAC field enums; the
+    // value->event mapping lives in the SVD (tools/svd_patch.yaml), not here.
+    //
+    // (The previous single `ExternalTrigger` enum was inherited verbatim from
+    // stm32f4xx-hal: a 4-bit EXTSEL layout whose codes 100-111 name the wrong
+    // events for this part and which conflated the two domains. It compiled
+    // because it was written via a raw `.bits()` field with no enum in the
+    // PAC, so nothing could catch the mismatch.)
+
+    /// Regular-sequence external trigger source (EXTRSEL, UM Table 17-5).
+    pub use crate::pac::adc::ctrl2::Extrsel as RegularTrigger;
+    /// Injected-sequence external trigger source (EXTJSEL, UM Table 17-6).
+    pub use crate::pac::adc::ctrl2::Extjsel as InjectedTrigger;
 
     /// Possible trigger modes
     #[cfg_attr(feature = "defmt", derive(defmt::Format))]
@@ -468,7 +449,7 @@ pub mod config {
         pub(crate) resolution: Resolution,
         pub(crate) align: Align,
         pub(crate) scan: Scan,
-        pub(crate) external_trigger: (TriggerMode, ExternalTrigger),
+        pub(crate) external_trigger: (TriggerMode, RegularTrigger),
         pub(crate) continuous: Continuous,
         pub(crate) dma: Dma,
         pub(crate) end_of_conversion_interrupt: Eoc,
@@ -497,11 +478,11 @@ pub mod config {
             self.scan = scan;
             self
         }
-        /// change the external_trigger field
+        /// change the external_trigger field (regular sequence, EXTRSEL)
         pub fn external_trigger(
             mut self,
             trigger_mode: TriggerMode,
-            trigger: ExternalTrigger,
+            trigger: RegularTrigger,
         ) -> Self {
             self.external_trigger = (trigger_mode, trigger);
             self
@@ -544,7 +525,7 @@ pub mod config {
                 resolution: Resolution::Twelve,
                 align: Align::Right,
                 scan: Scan::Disabled,
-                external_trigger: (TriggerMode::Disabled, ExternalTrigger::Tim_1_cc_1),
+                external_trigger: (TriggerMode::Disabled, RegularTrigger::Tim1cc1),
                 continuous: Continuous::Single,
                 dma: Dma::Disabled,
                 end_of_conversion_interrupt: Eoc::Disabled,
@@ -692,20 +673,23 @@ macro_rules! adc {
                     self.adc_reg.ctrl1().modify(|_, w| w.scanmd().bit(scan.into()));
                 }
 
-                /// Sets which external trigger to use and if it is disabled, rising, falling or both
-                pub fn set_regular_channel_external_trigger(&mut self, (edge, extsel): (config::TriggerMode, config::ExternalTrigger)) {
+                /// Sets the regular-sequence external trigger source and edge.
+                /// `trigger` is an EXTRSEL value (UM Table 17-5).
+                pub fn set_regular_channel_external_trigger(&mut self, (edge, extsel): (config::TriggerMode, config::RegularTrigger)) {
                     self.config.external_trigger = (edge, extsel);
-                    self.adc_reg.ctrl2().modify(|_, w| unsafe { w
-                        .extrsel().bits(extsel as _)
-                        .extrtrig().bit(edge.into()) }
+                    self.adc_reg.ctrl2().modify(|_, w| w
+                        .extrsel().variant(extsel)
+                        .extrtrig().bit(edge.into())
                     );
                 }
-                /// Sets which external trigger to use and if it is disabled, rising, falling or both
-                pub fn set_injected_channel_external_trigger(&mut self, (edge, extsel): (config::TriggerMode, config::ExternalTrigger)) {
-                    self.config.external_trigger = (edge, extsel);
-                    self.adc_reg.ctrl2().modify(|_, w| unsafe { w
-                        .extjsel().bits(extsel as _)
-                        .extjtrig().bit(edge.into()) }
+                /// Sets the injected-sequence external trigger source and edge.
+                /// `trigger` is an EXTJSEL value (UM Table 17-6) — a DIFFERENT
+                /// map from the regular sequence. Not stored in AdcConfig (which
+                /// only auto-applies the regular trigger); set this imperatively.
+                pub fn set_injected_channel_external_trigger(&mut self, (edge, extsel): (config::TriggerMode, config::InjectedTrigger)) {
+                    self.adc_reg.ctrl2().modify(|_, w| w
+                        .extjsel().variant(extsel)
+                        .extjtrig().bit(edge.into())
                     );
                 }
 

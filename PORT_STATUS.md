@@ -16,20 +16,30 @@ modules land.
 - **M3 gpio DONE** -- full STM32-style per-pin AF rewrite (commit `589ac3e` on
   branch `feat/gpio-af-stm-model`). See SPRINT.md HANDOFF for the architecture.
   Licensing also settled: both repos dual Apache-2.0 OR MIT.
+- **M4 driver port DONE** -- Remap model removed across pwm/spi/can/serial/
+  uart_impls/dynamic; DMA ported to the clustered `dma::Ch` model. PAC
+  `ef67950`, HAL `5eebce8`.
+- **PORT COMPLETE: 656 -> 0.** All drivers (gpio, spi, can, serial, adc, pwm,
+  i2c, fmc, dma) build clean with **0 errors and 0 clippy warnings** on both
+  `--features n32l403` and `--features n32l406`. Five genuine vendor-SVD bugs
+  and a pile of silently-wrong inherited pin/channel maps were fixed along the
+  way, every value checked against the UM/Datasheet rather than guessed.
+- **ADC trigger enums corrected** -- `EXTRSEL` (regular) and `EXTJSEL`
+  (injected) were a single inherited stm32f4 4-bit `ExternalTrigger` enum
+  written via raw `.bits()`: wrong event map for codes 100-111 and conflating
+  the two distinct N32L40x trigger domains. Replaced with two UM-verified PAC
+  field enums (`RegularTrigger`/`InjectedTrigger`, re-exported, written via
+  `.variant()`). Values from UM Tables 17-5 / 17-6. See the ADC section below.
 
 ## Current state (authoritative)
 
-`cargo build --features n32l403` AND `--features n32l406`
-(`--target thumbv7em-none-eabihf`, json metric): **175 errors each**, identical.
-Down from the 656 baseline. The GPIO AF layer (gpio/alt.rs + gpio/alt/altmap.rs)
-contributes ZERO errors -- the macro and generated table compile cleanly.
+**Port complete.** `cargo build` and `cargo clippy`, both devices
+(`--features n32l403` / `--features n32l406`, `--target thumbv7em-none-eabihf`):
+**0 errors, 0 clippy warnings.** Working trees clean.
 
-Remaining 175, by file (n32l403): pwm.rs 61, spi.rs 32, adc.rs 25, can.rs 18,
-serial.rs 15, i2c.rs 8, dma/mod.rs 6, serial/uart_impls.rs 5, gpio/dynamic.rs 4,
-sac.rs 1. All are *consumers* of the now-deleted Remap model (M4: pwm/spi/can/
-serial/dynamic) or multi-instance device-shape trims (M5 adc, M6 i2c/dma/sac).
-No architecture-level surprises remain -- the heavy lifting (the GPIO model) is
-done. See SPRINT.md for the M4-M6 plan and the AF-table provenance.
+The library layers are done; the next frontier is firmware bring-up in
+`servo4257-rs` (its HAL/PAC path deps are still commented out). See HANDOFF.md
+for the cross-repo state and the M5 plan.
 
 ## Baseline build error surface (HISTORICAL -- counts unreliable, see note)
 
@@ -131,5 +141,33 @@ identical:
   — DONE via the PAC svdtools enrichment.
 - Peripheral-name casing (`Rcc`/`Flash`/`Tim1`): DONE -- svd2rust 0.37.1
   emits PascalCase peripheral names natively, so no casing patch was needed.
-- `SYSCLK_MAX` const: HAL value defined only under n32g4 cfg arms. Still needs
-  an n32l403/n32l406 definition (~64 MHz per N32L40x spec). OPEN.
+- `SYSCLK_MAX` const: defined for n32l403/n32l406 at 64 MHz
+  (rcc/mod.rs:307). DONE.
+
+## adc.rs -- external trigger source enums (EXTRSEL / EXTJSEL)
+
+The N32L40x ADC has TWO distinct external-trigger source maps:
+- **EXTRSEL** (CTRL2[19:17]) selects the *regular* sequence trigger -- UM
+  Table 17-5.
+- **EXTJSEL** (CTRL2[14:12]) selects the *injected* sequence trigger -- UM
+  Table 17-6.
+
+The SAME 3-bit code means a DIFFERENT timer event in each table (code 0 =
+TIM1_CC1 for regular but TIM1_TRGO for injected, etc.), so a single shared
+enum cannot be correct for both. The vendor SVD defines no `<enumeratedValues>`
+for either field, so svd2rust emitted bare 3-bit `FieldWriter`s and the HAL
+carried ONE hand-written `ExternalTrigger` enum -- inherited verbatim from
+stm32f4xx-hal, a 4-bit EXTSEL layout whose codes 100-111 named the WRONG
+events for this part -- written via raw `.bits()`. It compiled clean and would
+have mis-triggered (or never triggered) the ADC on silicon: exactly the
+"silently-wrong inherited map" class.
+
+Fixed the same way as every other enum gap: enrich the SVD
+(`tools/svd_patch.yaml`, ADC CTRL2) with UM-verified `enumeratedValues` for
+both fields, regen, and have the HAL re-export the generated PAC enums
+(`config::RegularTrigger` = `Extrsel`, `config::InjectedTrigger` = `Extjsel`)
+and write them via `.variant()`. The value->event mapping now lives in the
+SVD; a wrong choice is a nonexistent variant (compile error), not a bad int.
+Also fixed a latent bug: the injected setter used to clobber the regular
+trigger slot in `AdcConfig`; it no longer touches config (only the regular
+trigger is auto-applied by `apply_config`).
