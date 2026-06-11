@@ -134,6 +134,16 @@ bus! {
     Spi2 => (APB2, 19),
 }
 
+// N32L40x: UART4/UART5 clock-enable live on APB2 bits 17/18 (verified against
+// PAC rcc::apb2pclken). The G4-family bus! blocks put them on APB1 or other
+// APB2 bits and are cfg-gated to n32g4*, so Uart4/Uart5 had no rcc::Enable/
+// Reset for this device. (Usart1/2/3 are already covered by ungated blocks.)
+#[cfg(any(feature = "n32l403", feature = "n32l406"))]
+bus! {
+    Uart4 => (APB2, 17),
+    Uart5 => (APB2, 18),
+}
+
 
 #[cfg(any(feature = "n32g452",feature = "n32g455",feature = "n32g457",feature = "n32g4fr"))]
 bus! {

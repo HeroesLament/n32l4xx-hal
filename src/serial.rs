@@ -313,8 +313,6 @@ halUsart! { pac::Usart2, usart1, Serial2, Rx2, Tx2 }
 halUsart! { pac::Usart3, usart1, Serial3, Rx3, Tx3 }
 halUart! { pac::Uart4, uart4, Serial4, Rx4, Tx4 }
 halUart! { pac::Uart5, uart4, Serial5, Rx5, Tx5 }
-halUart! { pac::Uart6, uart4, Serial6, Rx6, Tx6 }
-halUart! { pac::Uart7, uart4, Serial7, Rx7, Tx7 }
 
 impl<UART: CommonPins> Rx<UART, u8> {
     pub(crate) fn with_u16_data(self) -> Rx<UART, u16> {
@@ -603,7 +601,7 @@ macro_rules! serialdma {
         )+
     }
 }
-use crate::pac::{Usart1,Usart2,Usart3,Uart4,Uart5,Uart6,Uart7};
+use crate::pac::{Usart1,Usart2,Usart3,Uart4,Uart5};
 serialdma! {
     Usart1: (
         RxDma1,
@@ -624,13 +622,5 @@ serialdma! {
     Uart5: (
         RxDma5,
         TxDma5,
-    ),
-    Uart6: (
-        RxDma6,
-        TxDma6,
-    ),
-    Uart7: (
-        RxDma7,
-        TxDma7,
     ),
 }
