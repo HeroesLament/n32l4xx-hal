@@ -591,7 +591,7 @@ where
                     self.finish_transfer_with_result(Ok(())).ok();
     
                     // Wait for BTF
-                    while self.hal_i2c.i2c.sts1().read().bytef().bit_is_clear() {}
+                    while self.hal_i2c.i2c.sts1().read().bsf().bit_is_clear() {}
     
                     self.send_stop();
                     self.state = I2CMasterDmaState::Idle;
@@ -701,7 +701,7 @@ where
                     }
     
                     // Wait for BTF
-                    while self.hal_i2c.i2c.sts1().read().bytef().bit_is_clear() {}
+                    while self.hal_i2c.i2c.sts1().read().bsf().bit_is_clear() {}
     
                     // If we have prepared Rx Transfer, there are write_read command, generate restart signal
                     if let Some(buf) = have_read_after {

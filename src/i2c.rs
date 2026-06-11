@@ -122,8 +122,8 @@ pub trait Pins<I2C>: Sized {
 
 impl Pins<pac::I2c1>
     for (
-        gpio::PB6<Alternate<OpenDrain>>,
-        gpio::PB7<Alternate<OpenDrain>>,
+        gpio::PB6<Alternate<1, OpenDrain>>,
+        gpio::PB7<Alternate<1, OpenDrain>>,
     )
 {
     const REMAP: bool = false;
@@ -131,8 +131,8 @@ impl Pins<pac::I2c1>
 
 impl Pins<pac::I2c1>
     for (
-        gpio::PB8<Alternate<OpenDrain>>,
-        gpio::PB9<Alternate<OpenDrain>>,
+        gpio::PB8<Alternate<4, OpenDrain>>,
+        gpio::PB9<Alternate<4, OpenDrain>>,
     )
 {
     const REMAP: bool = true;
@@ -140,18 +140,18 @@ impl Pins<pac::I2c1>
 
 impl Pins<pac::I2c2>
     for (
-        gpio::PB10<Alternate<OpenDrain>>,
-        gpio::PB11<Alternate<OpenDrain>>,
+        gpio::PB10<Alternate<6, OpenDrain>>,
+        gpio::PB11<Alternate<6, OpenDrain>>,
     )
 {
     const REMAP: bool = false;
 }
 
 // editor's note: the rmp register docs in the user guide claims this is pc4 but this is a typo
-impl Pins<pac::I2c2>
+impl Pins<pac::I2c1>
     for (
-        gpio::PA4<Alternate<OpenDrain>>,
-        gpio::PA5<Alternate<OpenDrain>>,
+        gpio::PA4<Alternate<7, OpenDrain>>,
+        gpio::PA5<Alternate<7, OpenDrain>>,
     )
 {
     const REMAP: bool = true;
@@ -463,7 +463,7 @@ impl<I2C: Instance,PINS> I2c<I2C,PINS> {
         while self
             .check_and_clear_error_flags()
             .map_err(Error::nack_data)?
-            .bytef()
+            .bsf()
             .bit_is_clear()
         {}
         Ok(())

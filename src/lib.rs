@@ -41,6 +41,7 @@ pub mod fmc;
 pub mod gpio;
 pub mod i2c;
 pub mod pwm;
+#[cfg(not(any(feature = "n32l403", feature = "n32l406")))]
 pub mod sac;
 pub mod serial;
 pub mod spi;

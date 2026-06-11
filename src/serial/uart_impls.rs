@@ -181,11 +181,11 @@ macro_rules! uartCommon {
                     w.uen().set_bit()
                 });
                 match config.dma {
-                    DmaConfig::Tx => register_block.ctrl3().modify(|_,w| w.dmatxen().set_bit()),
-                    DmaConfig::Rx => register_block.ctrl3().modify(|_,w| w.dmarxen().set_bit()),
-                    DmaConfig::TxRx => register_block
+                    DmaConfig::Tx => { register_block.ctrl3().modify(|_,w| w.dmatxen().set_bit()); }
+                    DmaConfig::Rx => { register_block.ctrl3().modify(|_,w| w.dmarxen().set_bit()); }
+                    DmaConfig::TxRx => { register_block
                         .ctrl3()
-                        .modify(|_,w| w.dmarxen().set_bit().dmatxen().set_bit()),
+                        .modify(|_,w| w.dmarxen().set_bit().dmatxen().set_bit()); }
                     DmaConfig::None => {}
                 };
                 Ok(serial)

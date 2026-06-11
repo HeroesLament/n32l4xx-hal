@@ -25,7 +25,7 @@ impl Flash {
     // calculates the capacity from the Dbg register
     fn capacity() -> usize {
         let dbg = unsafe { crate::pac::Dbg::steal() };
-        (dbg.dbg_id().read().flash().bits() as usize) << 16
+        (dbg.id().read().flash().bits() as usize) << 16
     }
 
 
@@ -65,7 +65,7 @@ impl Flash {
         let erase_addr = Flash::FLASH_BASE + offset;
 
         fmc.ctrl().modify(|_, w| w.per().set_bit());
-        unsafe { fmc.addr().write(|w| w.fadd().bits(erase_addr)); }
+        unsafe { fmc.add().write(|w| w.fadd().bits(erase_addr)); }
         fmc.ctrl().modify(|_, w| w.start().set_bit());
         cortex_m::asm::dsb();
         cortex_m::asm::isb();
