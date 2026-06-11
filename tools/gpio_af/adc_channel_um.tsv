@@ -1,0 +1,22 @@
+# PIN	ADC_CHANNEL  -- Datasheet Table 3-1, pdftotext -bbox, parse_ds_adc.py (banded)
+PA0	1
+PA1	2
+PA2	3
+PA3	4
+PA4	5
+PA5	6
+PA6	7
+PA7	8
+PB0	9
+PB1	10
+PC0	11
+PC1	12
+PC2	13
+PC3	14
+PC4	15
+PC5	16
+# Internal channels (UM ch.17, Fig 17-3 / 17-7):
+# Temperature17
+# VREFBUFF18
+# VREFINT(internal 1.2V bandgap; see UM 17 "Internal channel supports VREFINT")
+# Note: OPAMP1_OUT->IN3, OPAMP2_OUT->IN7 (alt sources on those external channels)

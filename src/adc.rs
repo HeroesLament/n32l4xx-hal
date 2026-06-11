@@ -647,10 +647,6 @@ macro_rules! adc {
                     self.adc_reg.ctrl2().modify(|_,w| w.tempen().set_bit());
                 }
 
-                /// Enable Vref/Temp channels in the adc
-                pub fn set_synchronous_injection_mode(&mut self) {
-                    unsafe { self.adc_reg.ctrl1().modify(|_,w| w.dusel().bits(0b0101)) };
-                }
 
                 /// Disables the adc
                 /// # Note
@@ -838,7 +834,7 @@ macro_rules! adc {
                         config::RegularSequence::Fourteen => self.adc_reg.rseq1().modify(|_, w| unsafe {w.seq14().bits(channel) }),
                         config::RegularSequence::Fifteen  => self.adc_reg.rseq1().modify(|_, w| unsafe {w.seq15().bits(channel) }),
                         config::RegularSequence::Sixteen  => self.adc_reg.rseq1().modify(|_, w| unsafe {w.seq16().bits(channel) }),
-                    }
+                    };
 
                     //Set the sample time for the channel
                     let st = sample_time as u8;
@@ -863,7 +859,7 @@ macro_rules! adc {
                         17 => self.adc_reg.smpr1().modify(|_, w| unsafe {w.samp17().bits(st)}),
                         18 => self.adc_reg.sampt3().modify(|_, w| unsafe {w.samp().bits(st)}),
                         _ => unimplemented!(),
-                    }
+                    };
                 }
 
                 /// Configure a channel for sampling.
@@ -901,7 +897,7 @@ macro_rules! adc {
                         config::InjectedSequence::Two      => self.adc_reg.jseq().modify(|_, w| unsafe {w.jseq2().bits(channel) }),
                         config::InjectedSequence::Three    => self.adc_reg.jseq().modify(|_, w| unsafe {w.jseq3().bits(channel) }),
                         config::InjectedSequence::Four     => self.adc_reg.jseq().modify(|_, w| unsafe {w.jseq4().bits(channel) }),
-                    }
+                    };
 
                     //Set the sample time for the channel
                     let st = sample_time as u8;
@@ -926,13 +922,13 @@ macro_rules! adc {
                         17 => self.adc_reg.smpr1().modify(|_, w| unsafe {w.samp17().bits(st)}),
                         18 => self.adc_reg.sampt3().modify(|_, w| unsafe {w.samp().bits(st)}),
                         _ => unimplemented!(),
-                    }
+                    };
                 }
 
 
                 /// Returns the current sample stored in the ADC data register
                 pub fn current_sample(&self) -> u16 {
-                    self.adc_reg.dat().read().jdat().bits()
+                    self.adc_reg.dat().read().dat().bits()
                 }
 
 
@@ -963,7 +959,7 @@ macro_rules! adc {
                         config::InjectedSequence::Two      => self.adc_reg.joffset2().modify(|_,w| unsafe { w.offsetjch2().bits(offset) }),
                         config::InjectedSequence::Three    => self.adc_reg.joffset3().modify(|_,w| unsafe { w.offsetjch3().bits(offset) }),
                         config::InjectedSequence::Four     => self.adc_reg.joffset4().modify(|_,w| unsafe { w.offsetjch4().bits(offset) }),
-                    }
+                    };
                 }
 
                 /// Returns the current injected sample stored in the ADC data register
@@ -981,7 +977,7 @@ macro_rules! adc {
                         config::InjectedSequence::Four => self.adc_reg.joffset4().modify(|r,w| unsafe {  
                             w.offsetjch4().bits(i16::wrapping_add(r.offsetjch4().bits() as i16 , offset) as u16) 
                         }),
-                    }
+                    };
                 }
 
                 /// Block until the conversion is completed
@@ -1080,13 +1076,7 @@ macro_rules! adc {
 
 
 
-adc!(Adc1 => (adc1));
-
-adc!(Adc2 => (adc2));
-
-adc!(Adc3 => (adc3));
-
-adc!(Adc4 => (adc4));
+adc!(Adc => (adc));
 
 
 macro_rules! adc_map {
@@ -1105,85 +1095,31 @@ macro_rules! adc_map {
 mod mappings {
     use crate::gpio::*;
     use super::*;
+    // Channel map verified against Datasheet Table 3-1 + UM ch.17
+    // (tools/gpio_af/adc_channel_um.tsv). Single ADC on N32L40x.
     adc_map! {
-        Adc1 => {
+        Adc => {
             (PA0<crate::gpio::Analog>, 1),
             (PA1<crate::gpio::Analog>, 2),
-            (PA6<crate::gpio::Analog>, 3),
+            (PA2<crate::gpio::Analog>, 3),
             (PA3<crate::gpio::Analog>, 4),
-            (PF4<crate::gpio::Analog>, 5),
-            (PC0<crate::gpio::Analog>, 6),
-            (PC1<crate::gpio::Analog>, 7),
-            (PC2<crate::gpio::Analog>, 8),
-            (PC3<crate::gpio::Analog>, 9),
-            (PF2<crate::gpio::Analog>, 10),
-            (PA2<crate::gpio::Analog>, 11),
-            (Temperature, 16),
-            (Vbat, 17),
+            (PA4<crate::gpio::Analog>, 5),
+            (PA5<crate::gpio::Analog>, 6),
+            (PA6<crate::gpio::Analog>, 7),
+            (PA7<crate::gpio::Analog>, 8),
+            (PB0<crate::gpio::Analog>, 9),
+            (PB1<crate::gpio::Analog>, 10),
+            (PC0<crate::gpio::Analog>, 11),
+            (PC1<crate::gpio::Analog>, 12),
+            (PC2<crate::gpio::Analog>, 13),
+            (PC3<crate::gpio::Analog>, 14),
+            (PC4<crate::gpio::Analog>, 15),
+            (PC5<crate::gpio::Analog>, 16),
+            // Internal channels (UM ch.17): temp sensor IN17, VREFBUFF IN18.
+            (Temperature, 17),
             (Vref, 18),
         }
     }
-    adc_map! {
-        Adc2 => {
-            (PA4<crate::gpio::Analog>, 1),
-            (PA5<crate::gpio::Analog>, 2),
-            (PB1<crate::gpio::Analog>, 3),
-            (PA7<crate::gpio::Analog>, 4),
-            (PC4<crate::gpio::Analog>, 5),
-            (PC0<crate::gpio::Analog>, 6),
-            (PC1<crate::gpio::Analog>, 7),
-            (PC2<crate::gpio::Analog>, 8),
-            (PC3<crate::gpio::Analog>, 9),
-            (PF2<crate::gpio::Analog>, 10),
-            (PA2<crate::gpio::Analog>, 11),
-            (PC5<crate::gpio::Analog>, 12),
-            (PB2<crate::gpio::Analog>, 13),
-
-            (Vref, 18),
-        }
-    }
-    adc_map! {
-        Adc3 => {
-            (PB11<crate::gpio::Analog>, 1),
-            (PE9<crate::gpio::Analog>, 2),
-            (PE13<crate::gpio::Analog>, 3),
-            (PE12<crate::gpio::Analog>, 4),
-            (PB13<crate::gpio::Analog>, 5),
-            (PE8<crate::gpio::Analog>, 6),
-            (PD10<crate::gpio::Analog>, 7),
-            (PD11<crate::gpio::Analog>, 8),
-            (PD12<crate::gpio::Analog>, 9),
-            (PD13<crate::gpio::Analog>, 10),
-            (PD14<crate::gpio::Analog>, 11),
-            (PB0<crate::gpio::Analog>, 12),
-            (PE7<crate::gpio::Analog>, 13),
-            (PE10<crate::gpio::Analog>, 14),
-            (PE11<crate::gpio::Analog>, 15),
-
-            (Vref, 18),
-        }
-    }
-    adc_map! {
-        Adc4 => {
-            (PE14<crate::gpio::Analog>, 1),
-            (PE15<crate::gpio::Analog>, 2),
-            (PB12<crate::gpio::Analog>, 3),
-            (PB14<crate::gpio::Analog>, 4),
-            (PB15<crate::gpio::Analog>, 5),
-            (PE8<crate::gpio::Analog>, 6),
-            (PD10<crate::gpio::Analog>, 7),
-            (PD11<crate::gpio::Analog>, 8),
-            (PD12<crate::gpio::Analog>, 9),
-            (PD13<crate::gpio::Analog>, 10),
-            (PD14<crate::gpio::Analog>, 11),
-            (PD8<crate::gpio::Analog>, 12),
-            (PD9<crate::gpio::Analog>, 13),
-            
-            (Vref, 18),
-
-        }
-    }
-
 }
 
 

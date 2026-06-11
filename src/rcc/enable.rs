@@ -144,6 +144,15 @@ bus! {
     Uart5 => (APB2, 18),
 }
 
+// N32L40x: the single ADC clock-enable/reset live on AHB bit 12 (verified
+// against PAC rcc::ahbpclken/ahbprst ADC field). The G4 block uses Adc2/3/4
+// on AHB 13/14/15 and is cfg-gated to n32g4*, so the single Adc had no
+// rcc::Enable/Reset for this device.
+#[cfg(any(feature = "n32l403", feature = "n32l406"))]
+bus! {
+    Adc => (AHB, 12),
+}
+
 
 #[cfg(any(feature = "n32g452",feature = "n32g455",feature = "n32g457",feature = "n32g4fr"))]
 bus! {
