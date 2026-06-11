@@ -136,9 +136,9 @@ pub trait DMAChannel {
     fn status(&self) -> ChannelStatus;
     fn listen(&mut self, event: Event);
     fn unlisten(&mut self, event: Event);
-    fn st(&mut self) -> &crate::pac::dma1::St;
-    fn intsts(&self) -> n32g4::raw::R<crate::pac::dma1::intsts::IntstsSpec>;
-    fn intclr(&self) -> &crate::pac::dma1::Intclr;
+    fn st(&mut self) -> &crate::pac::dma::Ch;
+    fn intsts(&self) -> crate::pac::dma::intsts::R;
+    fn intclr(&self) -> &crate::pac::dma::Intclr;
     fn get_txnum(&self) -> u32;
 }
 
@@ -294,7 +294,7 @@ where
 macro_rules! dma {
     ($($DMAX:ident: ($dmaX:ident, {
         $($CX:ident: (
-            $chX:ident,
+            $chX:expr,
             $htxfX:ident,
             $txcfX:ident,
             $errfX:ident,
@@ -308,7 +308,7 @@ macro_rules! dma {
             pub mod $dmaX {
                 use core::convert::TryFrom;
 
-                use crate::pac::{Rcc, $DMAX, dma1};
+                use crate::pac::{Rcc, $DMAX, dma};
 
                 use crate::dma::{CircBuffer, DMAChannel, DmaExt, Error, Event, Half, RxDma, TransferPayload};
                 use crate::rcc::Enable;
@@ -334,13 +334,13 @@ macro_rules! dma {
                         fn clear_flag(&mut self, event : crate::dma::Event) { 
                             match event {
                                 crate::dma::Event::HalfTransfer => {
-                                    self.intclr().modify(|_,w| w.$chtxfX().clear_bit())
+                                    self.intclr().modify(|_,w| w.$chtxfX().clear_bit());
                                 },
                                 crate::dma::Event::TransferComplete => {
-                                    self.intclr().modify(|_,w| w.$ctxcfX().clear_bit())
+                                    self.intclr().modify(|_,w| w.$ctxcfX().clear_bit());
                                 },
                                 crate::dma::Event::TransferError => {
-                                    self.intclr().modify(|_,w| w.$cerrfX().clear_bit())
+                                    self.intclr().modify(|_,w| w.$cerrfX().clear_bit());
                                 }
                             }
                         }
@@ -348,13 +348,13 @@ macro_rules! dma {
                         fn set_transfer_direction(&mut self, direction: crate::dma::TransferDirection) {
                             match direction {
                                 crate::dma::TransferDirection::MemoryToMemory => {
-                                    self.st().chcfg().modify(|_,w| w.mem2mem().set_bit())
+                                    self.st().chcfg().modify(|_,w| w.mem2mem().set_bit());
                                 },
                                 crate::dma::TransferDirection::MemoryToPeripheral => {
-                                    self.st().chcfg().modify(|_,w| w.mem2mem().clear_bit().dir().set_bit())
+                                    self.st().chcfg().modify(|_,w| w.mem2mem().clear_bit().dir().set_bit());
                                 },
                                 crate::dma::TransferDirection::PeripheralToMemory => {
-                                    self.st().chcfg().modify(|_,w| w.mem2mem().clear_bit().dir().clear_bit())
+                                    self.st().chcfg().modify(|_,w| w.mem2mem().clear_bit().dir().clear_bit());
                                 },
                             }
                         }
@@ -402,12 +402,12 @@ macro_rules! dma {
 
                         fn listen(&mut self, event: Event) {
                             match event {
-                                Event::HalfTransfer => self.st().chcfg().modify(|_, w| w.htxie().set_bit()),
+                                Event::HalfTransfer => { self.st().chcfg().modify(|_, w| w.htxie().set_bit()); },
                                 Event::TransferComplete => {
-                                    self.st().chcfg().modify(|_, w| w.txcie().set_bit())
+                                    self.st().chcfg().modify(|_, w| w.txcie().set_bit());
                                 },
                                 Event::TransferError => {
-                                    self.st().chcfg().modify(|_, w| w.errie().set_bit())
+                                    self.st().chcfg().modify(|_, w| w.errie().set_bit());
                                 }
                             }
                         }
@@ -415,33 +415,33 @@ macro_rules! dma {
                         fn unlisten(&mut self, event: Event) {
                             match event {
                                 Event::HalfTransfer => {
-                                    self.st().chcfg().modify(|_, w| w.htxie().clear_bit())
+                                    self.st().chcfg().modify(|_, w| w.htxie().clear_bit());
                                 },
                                 Event::TransferComplete => {
-                                    self.st().chcfg().modify(|_, w| w.txcie().clear_bit())
+                                    self.st().chcfg().modify(|_, w| w.txcie().clear_bit());
                                 },
                                 Event::TransferError => {
-                                    self.st().chcfg().modify(|_, w| w.errie().clear_bit())
+                                    self.st().chcfg().modify(|_, w| w.errie().clear_bit());
                                 }
                             }
                         }
 
-                        fn st(&mut self) -> &dma1::St {
-                            unsafe { &(*$DMAX::ptr()).$chX() }
+                        fn st(&mut self) -> &crate::pac::dma::Ch {
+                            unsafe { &(*$DMAX::ptr()).ch($chX) }
                         }
 
-                        fn intsts(&self) -> n32g4::raw::R<dma1::intsts::IntstsSpec> {
+                        fn intsts(&self) -> dma::intsts::R {
                             // NOTE(unsafe) atomic read with no side effects
                             unsafe { (*$DMAX::ptr()).intsts().read() }
                         }
 
-                        fn intclr(&self) -> &dma1::Intclr {
+                        fn intclr(&self) -> &dma::Intclr {
                             unsafe { &(*$DMAX::ptr()).intclr() }
                         }
 
                         fn get_txnum(&self) -> u32 {
                             // NOTE(unsafe) atomic read with no side effects
-                            unsafe { &(*$DMAX::ptr())}.$chX().txnum().read().bits()
+                            unsafe { (*$DMAX::ptr()).ch($chX).txnum().read().bits() }
                         }
                     }
                     impl<B, PAYLOAD> CircBuffer<B, RxDma<PAYLOAD, $CX>>
@@ -530,10 +530,9 @@ macro_rules! dma {
                     fn split(self) -> Channels {
                         let rcc = unsafe { &(*Rcc::ptr()) };
                         $DMAX::enable(rcc);
-                        unsafe { (*$DMAX::ptr()).chmapen().modify(|_,w| w.map_en().set_bit()); }
                         // reset the DMA control registers (stops all on-going transfers)
                         $(
-                            self.$chX().chcfg().reset();
+                            unsafe { (*$DMAX::ptr()).ch($chX).chcfg().reset(); }
                         )+
 
                         Channels((), $($CX { _0: () }),+)
@@ -545,87 +544,44 @@ macro_rules! dma {
 }
 
 dma! {
-    Dma1: (dma1, {
+    Dma: (dma1, {
         C1: (
-            st1,
+            0,
             htxf1, txcf1, errf1,
             chtxf1, ctxcf1, cglbf1, cerrf1
         ),
         C2: (
-            st2,
+            1,
             htxf2, txcf2, errf2,
             chtxf2, ctxcf2, cglbf2, cerrf2
         ),
         C3: (
-            st3,
+            2,
             htxf3, txcf3, errf3,
             chtxf3, ctxcf3, cglbf3, cerrf3
         ),
         C4: (
-            st4,
+            3,
             htxf4, txcf4, errf4,
             chtxf4, ctxcf4, cglbf4, cerrf4
         ),
         C5: (
-            st5,
+            4,
             htxf5, txcf5, errf5,
             chtxf5, ctxcf5, cglbf5, cerrf5
         ),
         C6: (
-            st6,
+            5,
             htxf6, txcf6, errf6,
             chtxf6, ctxcf6, cglbf6, cerrf6
         ),
         C7: (
-            st7,
+            6,
             htxf7, txcf7, errf7,
             chtxf7, ctxcf7, cglbf7, cerrf7
         ),
         C8: (
-            st8,
-            htxf8, txcf8, errf8,
-            chtxf8, ctxcf8, cglbf8, cerrf8
-        ),
-    }),
-
-    Dma2: (dma2, {
-        C1: (
-            st1,
-            htxf1, txcf1, errf1,
-            chtxf1, ctxcf1, cglbf1, cerrf1
-        ),
-        C2: (
-            st2,
-            htxf2, txcf2, errf2,
-            chtxf2, ctxcf2, cglbf2, cerrf2
-        ),
-        C3: (
-            st3,
-            htxf3, txcf3, errf3,
-            chtxf3, ctxcf3, cglbf3, cerrf3
-        ),
-        C4: (
-            st4,
-            htxf4, txcf4, errf4,
-            chtxf4, ctxcf4, cglbf4, cerrf4
-        ),
-        C5: (
-            st5,
-            htxf5, txcf5, errf5,
-            chtxf5, ctxcf5, cglbf5, cerrf5
-        ),
-        C6: (
-            st6,
-            htxf6, txcf6, errf6,
-            chtxf6, ctxcf6, cglbf6, cerrf6
-        ),
-        C7: (
-            st7,
-            htxf7, txcf7, errf7,
-            chtxf7, ctxcf7, cglbf7, cerrf7
-        ),
-        C8: (
-            st8,
+            7,
             htxf8, txcf8, errf8,
             chtxf8, ctxcf8, cglbf8, cerrf8
         ),
