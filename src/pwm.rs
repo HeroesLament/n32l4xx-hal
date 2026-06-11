@@ -500,60 +500,48 @@ macro_rules! pins {
 pins! {
     Tim1:
         CH1(ComplementaryDisabled): [
-            PA8<Alternate<PushPull>>,
-            PE9<Alternate<PushPull>>
+            PA8<Alternate<2>>
         ]
         CH2(ComplementaryDisabled): [
-            PA9<Alternate<PushPull>>,
-            PE11<Alternate<PushPull>>
+            PA9<Alternate<2>>
         ]
         CH3(ComplementaryDisabled): [
-            PA10<Alternate<PushPull>>,
-            PE13<Alternate<PushPull>>
+            PA10<Alternate<2>>
         ]
         CH4(ComplementaryDisabled): [
-            PA11<Alternate<PushPull>>,
-            PE14<Alternate<PushPull>>
+            PA11<Alternate<2>>
         ]
         CH1N: [
-            PA7<Alternate<PushPull>>,
-            PB13<Alternate<PushPull>>,
-            PE8<Alternate<PushPull>>
+            PA7<Alternate<5>>,
+            PB13<Alternate<2>>
         ]
         CH2N: [
-            PB0<Alternate<PushPull>>,
-            PB14<Alternate<PushPull>>,
-            PE10<Alternate<PushPull>>
+            PB0<Alternate<5>>,
+            PB14<Alternate<2>>
         ]
         CH3N: [
-            PB1<Alternate<PushPull>>,
-            PB15<Alternate<PushPull>>,
-            PE12<Alternate<PushPull>>
+            PB1<Alternate<5>>,
+            PB15<Alternate<2>>
         ]
         CH4N: [
         ]
         BRK: [
-            PB12<Alternate<PushPull>>,
-            PA6<Alternate<PushPull>>,
-            PB5<Alternate<PushPull>>,
-            PE15<Alternate<PushPull>>
+            PB12<Alternate<5>>,
+            PA6<Alternate<5>>
         ]
     Tim2:
         CH1(ComplementaryImpossible): [
-            PA0<Alternate<PushPull>>,
-            PA15<Alternate<PushPull>>
+            PA0<Alternate<2>>
         ]
         CH2(ComplementaryImpossible): [
-            PA1<Alternate<PushPull>>,
-            PB3<Alternate<PushPull>>
+            PA1<Alternate<2>>,
+            PB3<Alternate<2>>
         ]
         CH3(ComplementaryImpossible): [
-            PA2<Alternate<PushPull>>,
-            PB10<Alternate<PushPull>>
+            PB10<Alternate<2>>
         ]
         CH4(ComplementaryImpossible): [
-            PA3<Alternate<PushPull>>,
-            PB11<Alternate<PushPull>>
+            PB11<Alternate<2>>
         ]
         CH1N: [
         ]
@@ -567,23 +555,23 @@ pins! {
         ]
     Tim3:
         CH1(ComplementaryImpossible): [
-            PA6<Alternate<PushPull>>,
-            PC6<Alternate<PushPull>>,
-            PB4<Alternate<PushPull>>
+            PA6<Alternate<2>>,
+            PC6<Alternate<2>>,
+            PB4<Alternate<2>>
 
         ]
         CH2(ComplementaryImpossible): [
-            PA7<Alternate<PushPull>>,
-            PC7<Alternate<PushPull>>,
-            PB5<Alternate<PushPull>>
+            PA7<Alternate<2>>,
+            PC7<Alternate<2>>,
+            PB5<Alternate<4>>
         ]
         CH3(ComplementaryImpossible): [
-            PB0<Alternate<PushPull>>,
-            PC8<Alternate<PushPull>>
+            PB0<Alternate<2>>,
+            PC8<Alternate<2>>
         ]
         CH4(ComplementaryImpossible): [
-            PB1<Alternate<PushPull>>,
-            PC9<Alternate<PushPull>>
+            PB1<Alternate<2>>,
+            PC9<Alternate<2>>
         ]
         CH1N: [
         ]
@@ -597,20 +585,16 @@ pins! {
         ]
     Tim4:
         CH1(ComplementaryImpossible): [
-            PB6<Alternate<PushPull>>,
-            PD12<Alternate<PushPull>>
+            PB6<Alternate<2>>
         ]
         CH2(ComplementaryImpossible): [
-            PB7<Alternate<PushPull>>,
-            PD13<Alternate<PushPull>>
+            PB7<Alternate<2>>
         ]
         CH3(ComplementaryImpossible): [
-            PB8<Alternate<PushPull>>,
-            PD14<Alternate<PushPull>>
+            PB8<Alternate<2>>
         ]
         CH4(ComplementaryImpossible): [
-            PB9<Alternate<PushPull>>,
-            PD15<Alternate<PushPull>>
+            PB9<Alternate<2>>
         ]
         CH1N: [
         ]
@@ -624,36 +608,30 @@ pins! {
         ]
     Tim8:
         CH1(ComplementaryDisabled): [
-            PC6<Alternate<PushPull>>,
-            PD14<Alternate<PushPull>>
+            PC6<Alternate<6>>
         ]
         CH2(ComplementaryDisabled): [
-            PC7<Alternate<PushPull>>,
-            PD15<Alternate<PushPull>>
+            PC7<Alternate<6>>
         ]
         CH3(ComplementaryDisabled): [
-            PC8<Alternate<PushPull>>
+            PC8<Alternate<6>>
         ]
         CH4(ComplementaryDisabled): [
-            PC9<Alternate<PushPull>>
+            PC9<Alternate<6>>
         ]
         CH1N: [
-            PA7<Alternate<PushPull>>,
-            PA15<Alternate<PushPull>>
+            PA7<Alternate<6>>
         ]
         CH2N: [
-            PB0<Alternate<PushPull>>,
-            PC12<Alternate<PushPull>>
+            PB0<Alternate<7>>
         ]
         CH3N: [
-            PB1<Alternate<PushPull>>,
-            PD2<Alternate<PushPull>>
+            PB1<Alternate<0>>
         ]
         CH4N: [
         ]
         BRK: [
-            PA6<Alternate<PushPull>>,
-            PB3<Alternate<PushPull>>
+            PA6<Alternate<6>>
         ]
 }
 // Period and prescaler calculator for 32-bit timers
@@ -889,7 +867,7 @@ macro_rules! tim_hal {
                             2 => tim.ctrl1().modify(|_, w| unsafe { w.clkd().bits(1) }),
                             4 => tim.ctrl1().modify(|_, w| unsafe { w.clkd().bits(2) }),
                             _ => panic!("Should be unreachable, invalid deadtime prescaler"),
-                        }
+                        };
 
                         let bkp = match self.fault_polarity {
                             Polarity::ActiveLow => false,
@@ -1110,7 +1088,7 @@ macro_rules! tim_pin_hal {
 
                     // Even though the field is 20 bits long for 16-bit counters, only 16 bits are
                     // valid, so we convert to the appropriate type.
-                    tim.$ccrx().read().ccr().bits()
+                    tim.$ccrx().read().$ccrx().bits()
                 }
 
                 fn get_max_duty(&self) -> Self::Duty {
@@ -1135,7 +1113,7 @@ macro_rules! tim_pin_hal {
                 fn set_duty(&mut self, duty: Self::Duty) {
                     let tim = unsafe { &*$TIMX::ptr() };
 
-                    tim.$ccrx().write(|w| unsafe { w.ccr().bits(duty.into()) });
+                    tim.$ccrx().write(|w| unsafe { w.$ccrx().bits(duty.into()) });
                 }
             }
 
@@ -1274,39 +1252,39 @@ macro_rules! tim_pin_hal {
 
 // Quad channel timers
 tim_pin_hal! {
-    Tim1: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccr1, u16, cc1nen, cc1np),
-    Tim1: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccr2, u16, cc2nen, cc2np),
-    Tim1: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccr3, u16, cc3nen, cc3np),
-    Tim1: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccr4, u16),
+    Tim1: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccdat1, u16, cc1nen, cc1np),
+    Tim1: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccdat2, u16, cc2nen, cc2np),
+    Tim1: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccdat3, u16, cc3nen, cc3np),
+    Tim1: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccdat4, u16),
 }
 tim_pin_hal! {
-    Tim2: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccr1, u16),
-    Tim2: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccr2, u16),
-    Tim2: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccr3, u16),
-    Tim2: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccr4, u16),
+    Tim2: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccdat1, u16),
+    Tim2: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccdat2, u16),
+    Tim2: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccdat3, u16),
+    Tim2: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccdat4, u16),
 }
 tim_pin_hal! {
-    Tim3: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccr1, u16),
-    Tim3: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccr2, u16),
-    Tim3: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccr3, u16),
-    Tim3: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccr4, u16),
+    Tim3: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccdat1, u16),
+    Tim3: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccdat2, u16),
+    Tim3: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccdat3, u16),
+    Tim3: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccdat4, u16),
 }
 tim_pin_hal! {
-    Tim4: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccr1, u16),
-    Tim4: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccr2, u16),
-    Tim4: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccr3, u16),
-    Tim4: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccr4, u16),
+    Tim4: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccdat1, u16),
+    Tim4: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccdat2, u16),
+    Tim4: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccdat3, u16),
+    Tim4: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccdat4, u16),
 }
 tim_pin_hal! {
-    Tim5: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccr1, u16),
-    Tim5: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccr2, u16),
-    Tim5: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccr3, u16),
-    Tim5: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccr4, u16),
+    Tim5: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccdat1, u16),
+    Tim5: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccdat2, u16),
+    Tim5: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccdat3, u16),
+    Tim5: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccdat4, u16),
 }
 // Quad channel timers
 tim_pin_hal! {
-    Tim8: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccr1, u16, cc1nen, cc1np),
-    Tim8: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccr2, u16, cc2nen, cc2np),
-    Tim8: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccr3, u16, cc3nen, cc3np),
-    Tim8: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccr4, u16),
+    Tim8: (C1, cc1en, cc1p, ccmod1, oc1pen, oc1m, ccdat1, u16, cc1nen, cc1np),
+    Tim8: (C2, cc2en, cc2p, ccmod1, oc2pen, oc2m, ccdat2, u16, cc2nen, cc2np),
+    Tim8: (C3, cc3en, cc3p, ccmod2, oc3pen, oc3m, ccdat3, u16, cc3nen, cc3np),
+    Tim8: (C4, cc4en, cc4p, ccmod2, oc4pen, oc4m, ccdat4, u16),
 }
